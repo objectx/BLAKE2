@@ -1,0 +1,11 @@
+*.sdf
+*.opensdf
+*.suo
+*.vpj
+*.vpw
+*.vpwhist
+*.vtg
+*.vcxproj.user
+ipch/
+build/
+
