@@ -8,6 +8,8 @@
 
 #include <sys/types.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <memory.h>
 
 namespace BLAKE2 {
 
@@ -36,23 +38,29 @@ namespace BLAKE2 {
 	Parameter &	SetFanout (uint8_t value) {
 	    return SetByte (2, value) ;
 	}
-	Parameter &
+	uint_fast8_t	GetDepth () const {
+	    return GetByte (3) ;
+	}
+	Parameter &	SetDepth (uint8_t value) {
+	    return SetByte (3, value) ;
+	}
 	uint_fast32_t	GetLeafLength () const {
+	    return static_cast<uint_fast32_t> (p_ [0] >> 32) ;
 	}
-    private:
-	uint_fast8_t	GetByte (size_t offset) const {
-	    size_t	off = offset >> 3 ;
-	    size_t	rem = offset & 0x7u ;
-	    return static_cast<uint_fast8_t> (p_ [off] >> (8 * rem)) ;
-	}
-	Parameter &	SetByte (size_t offset, uint8_t value) {
-	    size_t	off = offset >> 3 ;
-	    size_t	rem = offset & 0x7u ;
-	    const uint_fast64_t	mask = 0xFFu ;
-	    const size_t	shift = 8 * rem ;
-	    p_ [off] = p_ [off] & ~(mask << shift) | (static_cast<uint_fast64_t> (value) << shift) ;
+	Parameter &	SetLeafLength (uint32_t value) {
+	    uint_fast64_t	mask = 0xFFFFFFFFu ;
+	    p_ [0] = (p_ [0] & ~(mask << 32)) | (static_cast<uint_fast64_t> (value) << 32) ;
 	    return *this ;
 	}
+	uint_fast8_t	GetNodeDepth () const {
+	    return GetByte (16) ;
+	}
+	Parameter &	SetNodeDepth (uint8_t value) {
+	    return SetByte (16, value) ;
+	}
+    private:
+	uint_fast8_t	GetByte (size_t offset) const ;
+	Parameter &	SetByte (size_t offset, uint8_t value) ;
     } ;
 
     class Digest {
