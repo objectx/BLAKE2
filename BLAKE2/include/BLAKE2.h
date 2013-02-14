@@ -8,14 +8,17 @@
 
 #include <sys/types.h>
 #include <stdint.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <memory.h>
 
 namespace BLAKE2 {
+    class Digest ;
 
     class Parameter {
+	friend Digest	Apply (const void *key, size_t key_length, const void *data, size_t data_length) ;
     public:
-	static size_t const	PARAMETER_SIZE = 8 * 8 ;
+	static size_t const	SIZE = 8 * 8 ;
     private:
 	uint64_t	p_ [8] ;
     public:
@@ -86,6 +89,9 @@ namespace BLAKE2 {
      * 512bits digest value.
      */
     class Digest {
+	friend Digest	Apply (const void *key, size_t key_length, const void *data, size_t data_length) ;
+    public:
+	static size_t const	SIZE = 8 * 8 ;
     private:
 	uint64_t	h_ [8] ;
     public:
@@ -102,11 +108,26 @@ namespace BLAKE2 {
         Digest &	operator = (const Digest &src) {
             return Assign (src) ;
         }
-        const uint64_t *	GetValues () const {
-            return h_ ;
-        }
-    };
+	static bool	IsEqual (const Digest &a, const Digest &b) {
+	    return ::memcmp (a.h_, b.h_, sizeof (a.h_)) == 0 ;
+	}
+	void	GetBytes (void *buffer, size_t buffer_length) ;
+
+	uint_fast8_t	GetByte (size_t offset) {
+	    size_t	off = offset / 8 ;
+	    size_t	rem = offset % 8 ;
+	    assert (off < 8) ;
+	    uint_fast64_t	v = h_ [off] ;
+	    return static_cast<uint8_t> (v >> (8 * rem)) ;
+	}
+    } ;
+
+    Digest	Apply (const void *key, size_t key_length, const void *data, size_t data_size) ;
 }	/* end of [namespace BLAKE2] */
+
+inline bool	operator == (const BLAKE2::Digest &a, const BLAKE2::Digest &b) {
+    return BLAKE2::Digest::IsEqual (a, b) ;
+}
 
 #endif	/* blake2_h__4a9213114a5fd6c034b25abd47c90326 */
 /*

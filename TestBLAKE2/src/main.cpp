@@ -9,7 +9,7 @@
 
 static std::string	dump_parameter (const BLAKE2::Parameter &parameter) {
     std::ostringstream	out ;
-    uint8_t	b [BLAKE2::Parameter::PARAMETER_SIZE] ;
+    uint8_t	b [BLAKE2::Parameter::SIZE] ;
     parameter.GetBytes (b, sizeof (b)) ;
 
     for (int_fast32_t i = 0 ; i < sizeof (b) ; i += 16) {

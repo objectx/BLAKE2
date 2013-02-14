@@ -50,6 +50,11 @@ namespace BLAKE2 {
 	p_ [off] = p_ [off] & ~(mask << shift) | (static_cast<uint_fast64_t> (value) << shift) ;
 	return *this ;
     }
+
+    Digest	Apply (const void *key, size_t key_length, const void *data, size_t data_length) {
+        return Digest () ;
+    }
+
 }	/* end of [namespace BLAKE2] */
 /*
  * [END OF FILE]
