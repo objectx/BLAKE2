@@ -3,9 +3,30 @@
  *
  * Author(s): objectx
  */
+#include <algorithm>
 #include <BLAKE2.h>
 
+static const size_t	SALT_LENGTH = 16 ;
+static const size_t	PERSONALIZATION_INFO_LENGTH = 16 ;
+
 namespace BLAKE2 {
+
+    void	Parameter::GetSalt (void *buffer, size_t buffer_length) {
+	::memcpy (buffer, &p_ [4], std::min (SALT_LENGTH, buffer_length)) ;
+    }
+    Parameter &	Parameter::SetSalt (const void *data, size_t length) {
+	::memset (&p_ [4], 0, SALT_LENGTH) ;
+	::memcpy (&p_ [4], data, std::min (length, SALT_LENGTH)) ;
+	return *this ;
+    }
+    void	Parameter::GetPersonalizationData (void *buffer, size_t buffer_length) {
+	::memcpy (buffer, &p_ [6], std::min (PERSONALIZATION_INFO_LENGTH, buffer_length)) ;
+    }
+    Parameter &	Parameter::SetPersonalizationData (const void *data, size_t length) {
+	::memset (&p_ [6], 0, PERSONALIZATION_INFO_LENGTH) ;
+	::memcpy (&p_ [6], data, std::min (length, PERSONALIZATION_INFO_LENGTH)) ;
+	return *this ;
+    }
 
     uint_fast8_t	Parameter::GetByte (size_t offset) const {
 	size_t	off = offset >> 3 ;

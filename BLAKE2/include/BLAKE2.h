@@ -52,12 +52,29 @@ namespace BLAKE2 {
 	    p_ [0] = (p_ [0] & ~(mask << 32)) | (static_cast<uint_fast64_t> (value) << 32) ;
 	    return *this ;
 	}
+	uint_fast64_t	GetNodeOffset () const {
+	    return p_ [1] ;
+	}
+	Parameter &	SetNodeOffset (uint64_t offset) {
+	    p_ [1] = offset ;
+	    return *this ;
+	}
 	uint_fast8_t	GetNodeDepth () const {
 	    return GetByte (16) ;
 	}
 	Parameter &	SetNodeDepth (uint8_t value) {
 	    return SetByte (16, value) ;
 	}
+	uint_fast8_t	GetInnerLength () const {
+	    return GetByte (17) ;
+	}
+	Parameter &	SetInnerLength (uint8_t value) {
+	    return SetByte (17, value) ;
+	}
+	void	GetSalt (void *buffer, size_t buffer_length) ;
+	Parameter &	SetSalt (const void *data, size_t length) ;
+	void	GetPersonalizationData (void *buffer, size_t buffer_length) ;
+	Parameter &	SetPersonalizationData (const void *data, size_t length) ;
     private:
 	uint_fast8_t	GetByte (size_t offset) const ;
 	Parameter &	SetByte (size_t offset, uint8_t value) ;
@@ -76,14 +93,14 @@ namespace BLAKE2 {
         Digest (const Digest &src) {
             ::memcpy (h_, src.h_, sizeof (h_)) ;
         }
-        Digest &    Assign (const Digest &src) {
+        Digest &	Assign (const Digest &src) {
             ::memcpy (h_, src.h_, sizeof (h_)) ;
             return *this ;
         }
-        Digest &    operator = (const Digest &src) {
+        Digest &	operator = (const Digest &src) {
             return Assign (src) ;
         }
-        const uint64_t *    GetValues () const {
+        const uint64_t *	GetValues () const {
             return h_ ;
         }
     };
