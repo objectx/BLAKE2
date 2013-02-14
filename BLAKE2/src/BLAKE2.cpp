@@ -11,6 +11,10 @@ static const size_t	PERSONALIZATION_INFO_LENGTH = 16 ;
 
 namespace BLAKE2 {
 
+    Parameter::Parameter () {
+	::memset (p_, 0, sizeof (p_)) ;
+	SetDigestLength (64).SetFanout (1).SetDepth (1) ;
+    }
     void	Parameter::GetSalt (void *buffer, size_t buffer_length) {
 	::memcpy (buffer, &p_ [4], std::min (SALT_LENGTH, buffer_length)) ;
     }
@@ -27,7 +31,12 @@ namespace BLAKE2 {
 	::memcpy (&p_ [6], data, std::min (length, PERSONALIZATION_INFO_LENGTH)) ;
 	return *this ;
     }
-
+    void	Parameter::GetBytes (void *buffer, size_t buffer_length) const {
+        auto	p = static_cast<uint8_t *> (buffer) ;
+        for (int_fast32_t i = 0 ; i < buffer_length ; ++i) {
+            p [i] = GetByte (i) ;
+        }
+    }
     uint_fast8_t	Parameter::GetByte (size_t offset) const {
 	size_t	off = offset >> 3 ;
 	size_t	rem = offset & 0x7u ;

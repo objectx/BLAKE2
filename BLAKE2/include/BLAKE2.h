@@ -14,12 +14,12 @@
 namespace BLAKE2 {
 
     class Parameter {
+    public:
+	static size_t const	PARAMETER_SIZE = 8 * 8 ;
     private:
 	uint64_t	p_ [8] ;
     public:
-	Parameter () {
-	    ::memset (p_, 0, sizeof (p_)) ;
-	}
+	Parameter () ;
 	uint_fast8_t	GetDigestLength () const {
 	    return GetByte (0) ;
 	}
@@ -75,6 +75,8 @@ namespace BLAKE2 {
 	Parameter &	SetSalt (const void *data, size_t length) ;
 	void	GetPersonalizationData (void *buffer, size_t buffer_length) ;
 	Parameter &	SetPersonalizationData (const void *data, size_t length) ;
+
+	void	GetBytes (void *buffer, size_t buffer_length) const ;
     private:
 	uint_fast8_t	GetByte (size_t offset) const ;
 	Parameter &	SetByte (size_t offset, uint8_t value) ;
