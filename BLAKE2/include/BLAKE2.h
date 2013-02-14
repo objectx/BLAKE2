@@ -63,10 +63,29 @@ namespace BLAKE2 {
 	Parameter &	SetByte (size_t offset, uint8_t value) ;
     } ;
 
+    /**
+     * 512bits digest value.
+     */
     class Digest {
     private:
 	uint64_t	h_ [8] ;
-
+    public:
+        Digest () {
+            ::memset (h_, 0, sizeof (h_)) ;
+        }
+        Digest (const Digest &src) {
+            ::memcpy (h_, src.h_, sizeof (h_)) ;
+        }
+        Digest &    Assign (const Digest &src) {
+            ::memcpy (h_, src.h_, sizeof (h_)) ;
+            return *this ;
+        }
+        Digest &    operator = (const Digest &src) {
+            return Assign (src) ;
+        }
+        const uint64_t *    GetValues () const {
+            return h_ ;
+        }
     };
 }	/* end of [namespace BLAKE2] */
 
