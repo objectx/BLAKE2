@@ -13,6 +13,9 @@
 #include <memory.h>
 
 namespace BLAKE2 {
+
+    const size_t	BLOCK_SIZE = 64 ;
+
     class Digest ;
 
     class Parameter {
@@ -123,6 +126,20 @@ namespace BLAKE2 {
     } ;
 
     Digest	Apply (const void *key, size_t key_length, const void *data, size_t data_size) ;
+
+    class State {
+    private:
+	Digest		d_ ;
+	uint64_t	t_ [2] ;
+	uint64_t	f_ [2] ;
+	uint8_t		buf_ [BLOCK_SIZE] ;
+	bool		finalized_ ;
+    public:
+	State () ;
+	State &	Update (const void *data, size_t length) ;
+	Digest	Finalize () ;
+	bool	IsFinalized () const ;
+    } ;
 }	/* end of [namespace BLAKE2] */
 
 inline bool	operator == (const BLAKE2::Digest &a, const BLAKE2::Digest &b) {
