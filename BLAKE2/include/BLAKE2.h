@@ -18,74 +18,86 @@ namespace BLAKE2 {
 
     class Digest ;
 
-    class Parameter {
+    typedef uint64_t	parameter_t [8] ;
+
+    uint_fast8_t	GetByte (const parameter_t &P, size_t offset) ;
+    parameter_t &	SetByte (parameter_t &P, size_t offset, uint8_t value) ;
+
+    class ParameterView {
 	friend Digest	Apply (const void *key, size_t key_length, const void *data, size_t data_length) ;
     public:
 	static size_t const	SIZE = 8 * 8 ;
     private:
-	uint64_t	p_ [8] ;
+	parameter_t *	p_ ;
     public:
-	Parameter () ;
-	uint_fast8_t	GetDigestLength () const {
-	    return GetByte (0) ;
+	ParameterView (parameter_t &p) ;
+	ParameterView &	Attach (parameter_t &p) {
+	    p_ = &p ;
 	}
-	Parameter &	SetDigestLength (uint8_t value) {
-	    return SetByte (0, value) ;
+	uint_fast8_t	GetDigestLength () const {
+	    return GetByte (*p_, 0) ;
+	}
+	ParameterView &	SetDigestLength (uint8_t value) {
+	    SetByte (*p_, 0, value) ;
+	    return *this ;
 	}
 	uint_fast8_t	GetKeyLength () const {
-	    return GetByte (1) ;
+	    return GetByte (*p_, 1) ;
 	}
-	Parameter &	SetKeyLength (uint8_t value) {
-	    return SetByte (1, value) ;
+	ParameterView &	SetKeyLength (uint8_t value) {
+	    SetByte (*p_, 1, value) ;
+	    return *this ;
 	}
 	uint_fast8_t	GetFanout () const {
-	    return GetByte (2) ;
+	    return GetByte (*p_, 2) ;
 	}
-	Parameter &	SetFanout (uint8_t value) {
-	    return SetByte (2, value) ;
+	ParameterView &	SetFanout (uint8_t value) {
+	    SetByte (*p_, 2, value) ;
+	    return *this ;
 	}
 	uint_fast8_t	GetDepth () const {
-	    return GetByte (3) ;
+	    return GetByte (*p_, 3) ;
 	}
-	Parameter &	SetDepth (uint8_t value) {
-	    return SetByte (3, value) ;
+	ParameterView &	SetDepth (uint8_t value) {
+	    SetByte (*p_, 3, value) ;
+	    return *this ;
 	}
 	uint_fast32_t	GetLeafLength () const {
-	    return static_cast<uint_fast32_t> (p_ [0] >> 32) ;
+	    return static_cast<uint_fast32_t> ((*p_) [0] >> 32) ;
 	}
-	Parameter &	SetLeafLength (uint32_t value) {
+	ParameterView &	SetLeafLength (uint32_t value) {
 	    uint_fast64_t	mask = 0xFFFFFFFFu ;
-	    p_ [0] = (p_ [0] & ~(mask << 32)) | (static_cast<uint_fast64_t> (value) << 32) ;
+	    parameter_t &	P = *p_ ;
+	    P [0] = (P [0] & ~(mask << 32)) | (static_cast<uint_fast64_t> (value) << 32) ;
 	    return *this ;
 	}
 	uint_fast64_t	GetNodeOffset () const {
-	    return p_ [1] ;
+	    return (*p_) [1] ;
 	}
-	Parameter &	SetNodeOffset (uint64_t offset) {
-	    p_ [1] = offset ;
+	ParameterView &	SetNodeOffset (uint64_t offset) {
+	    (*p_) [1] = offset ;
 	    return *this ;
 	}
 	uint_fast8_t	GetNodeDepth () const {
-	    return GetByte (16) ;
+	    return GetByte (*p_, 16) ;
 	}
-	Parameter &	SetNodeDepth (uint8_t value) {
-	    return SetByte (16, value) ;
+	ParameterView &	SetNodeDepth (uint8_t value) {
+	    SetByte (*p_, 16, value) ;
+	    return *this ;
 	}
 	uint_fast8_t	GetInnerLength () const {
-	    return GetByte (17) ;
+	    return GetByte (*p_, 17) ;
 	}
-	Parameter &	SetInnerLength (uint8_t value) {
-	    return SetByte (17, value) ;
+	ParameterView &	SetInnerLength (uint8_t value) {
+	    SetByte (*p_, 17, value) ;
+	    return *this ;
 	}
-	void	GetSalt (void *buffer, size_t buffer_length) ;
-	Parameter &	SetSalt (const void *data, size_t length) ;
-	void	GetPersonalizationData (void *buffer, size_t buffer_length) ;
-	Parameter &	SetPersonalizationData (const void *data, size_t length) ;
+	void		GetSalt (void *buffer, size_t buffer_length) ;
+	ParameterView &	SetSalt (const void *data, size_t length) ;
+	void		GetPersonalizationData (void *buffer, size_t buffer_length) ;
+	ParameterView &	SetPersonalizationData (const void *data, size_t length) ;
 
 	void	GetBytes (void *buffer, size_t buffer_length) const ;
-    private:
-	uint_fast8_t	GetByte (size_t offset) const ;
-	Parameter &	SetByte (size_t offset, uint8_t value) ;
     } ;
 
     /**
