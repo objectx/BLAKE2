@@ -14,7 +14,7 @@
 
 namespace BLAKE2 {
 
-    const size_t	BLOCK_SIZE = 64 ;
+    const size_t	BLOCK_SIZE = 128 ;	// Messages are processed per BLOCK_SIZE unit.
 
     class Digest ;
 
@@ -24,7 +24,6 @@ namespace BLAKE2 {
     parameter_t &	SetByte (parameter_t &P, size_t offset, uint8_t value) ;
 
     class ParameterView {
-	friend Digest	Apply (const void *key, size_t key_length, const void *data, size_t data_length) ;
     public:
 	static size_t const	SIZE = 8 * 8 ;
     private:
@@ -104,9 +103,6 @@ namespace BLAKE2 {
      * 512bits digest value.
      */
     class Digest {
-	friend Digest	Apply (const void *key, size_t key_length, const void *data, size_t data_length) ;
-    public:
-	static size_t const	SIZE = 8 * 8 ;
     private:
 	uint64_t	h_ [8] ;
     public:
@@ -136,8 +132,6 @@ namespace BLAKE2 {
 	    return static_cast<uint8_t> (v >> (8 * rem)) ;
 	}
     } ;
-
-    Digest	Apply (const void *key, size_t key_length, const void *data, size_t data_size) ;
 
     class State {
     private:
