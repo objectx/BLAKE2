@@ -136,6 +136,45 @@ namespace BLAKE2 {
 	}
     } ;
 
+    class Generator {
+    private:
+	enum {
+	    BIT_FINALIZED = 0,
+	    BIT_LAST_NODE = 1
+	} ;
+    private:
+	uint64_t	t0_ ;
+	uint64_t	t1_ ;
+	int32_t		used_ ;
+	uint32_t	flags_ ;
+	uint8_t *	work_ ;
+	/*
+	 * work_ --> +----------------+
+	 *           |     H_ [0]     |
+	 *           |     H_ [1]     |
+	 *                    :
+	 *           |     H_ [6]     |
+	 *           |     H_ [7]     |
+	 *           +----------------+
+	 *           |                |
+	 *           :    128bytes    :
+	 *           |                |
+	 *           +----------------+
+	 */
+    public:
+	~Generator () ;
+	Generator (const parameter_t &param) ;
+	Generator (const parameter_t &param, const void *key, size_t key_len) ;
+	Generator &	Update (const void *data, size_t size) ;
+	Digest	Finalize () ;
+    private:
+	bool	IsFinalized () const {
+	    return (flags_ & (1u << BIT_FINALIZED)) != 0 ;
+	}
+	bool	IsLastNode () const {
+	    return (flags_ & (1u << BIT_LAST_NODE)) != 0 ;
+	}
+    } ;
     void	InitializeChain (uint64_t *chain) ;
     void	Compress (uint64_t *chain, const void *message, uint64_t t0, uint64_t t1, uint64_t f0, uint64_t f1) ;
 }	/* end of [namespace BLAKE2] */

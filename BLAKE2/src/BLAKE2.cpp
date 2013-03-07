@@ -207,6 +207,69 @@ namespace BLAKE2 {
 	chain [6] ^= v06 ^ v14 ;
 	chain [7] ^= v07 ^ v15 ;
     }
+
+    Generator::~Generator () {
+	free (work_) ;
+    }
+    Generator::Generator (const parameter_t &param)
+        : t0_ (0)
+        , t1_ (0)
+        , used_ (0)
+        , flags_ (0)
+        , work_ (0) {
+	work_ = static_cast<uint8_t *> (malloc (8 * sizeof (uint64_t) + 128)) ;
+    }
+    Generator::Generator (const parameter_t &param, const void *key, size_t key_len)
+        : t0_ (0)
+        , t1_ (0)
+        , used_ (0)
+        , flags_ (0)
+        , work_ (0) {
+	work_ = static_cast<uint8_t *> (malloc (8 * sizeof (uint64_t) + 128)) ;
+    }
+
+    Generator &	Generator::Update (const void *data, size_t size) {
+	uint64_t *	H = reinterpret_cast<uint64_t *> (work_) ;
+	uint8_t *	buffer = work_ + (8 * sizeof (uint64_t)) ;
+	const uint8_t *	src = static_cast<const uint8_t *> (data) ;
+
+	while (0 < size) {
+	    if (used_ == 0) {
+		if (size < BLOCK_SIZE) {
+		    memcpy (buffer, src, size) ;
+		    used_ += static_cast<int32_t> (size) ;
+		    break ;
+		}
+		// Special case: Avoid copying.
+		// BLOCK_SIZE <= size
+		// TODO: Perform hash computation directly onto SRC.
+		Compress (H, src, t0_, t1_, 0, 0) ;
+		t0_ += BLOCK_SIZE ;
+		if (t0_ < BLOCK_SIZE) {
+		    ++t1_ ;
+		}
+		used_ = 0 ;
+		size -= BLOCK_SIZE ;
+		src += BLOCK_SIZE ;
+	    }
+	    else {
+		size_t	remain = BLOCK_SIZE - used_ ;
+		if (size < remain) {
+		    memcpy (buffer + used_, src, size) ;
+		    used_ += static_cast<int32_t> (size) ;
+		    break ;
+		}
+		// remain <= size
+		memcpy (buffer + used_, src, remain) ;
+		// Buffer is filled up.  Perform flush.
+		Compress (H, buffer, t0_, t1_, 0, 0) ;
+		used_ = 0 ;
+		size -= remain ;
+		src += remain ;
+	    }
+	}
+	return *this ;
+    }
 }	/* end of [namespace BLAKE2] */
 /*
  * [END OF FILE]
