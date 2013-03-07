@@ -21,6 +21,9 @@
     <ClInclude Include="..\src\blake2-kat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\blake2-impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\blake2b-ref.c">
