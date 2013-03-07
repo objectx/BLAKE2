@@ -133,19 +133,16 @@ namespace BLAKE2 {
 	}
     } ;
 
-    class State {
-    private:
-	Digest		d_ ;
-	uint64_t	t_ [2] ;
-	uint64_t	f_ [2] ;
-	uint8_t		buf_ [BLOCK_SIZE] ;
-	bool		finalized_ ;
-    public:
-	State () ;
-	State &	Update (const void *data, size_t length) ;
-	Digest	Finalize () ;
-	bool	IsFinalized () const ;
-    } ;
+    const uint64_t	IV0 = 0x6a09e667f3bcc908ULL ;
+    const uint64_t	IV1 = 0xbb67ae8584caa73bULL ;
+    const uint64_t	IV2 = 0x3c6ef372fe94f82bULL ;
+    const uint64_t	IV3 = 0xa54ff53a5f1d36f1ULL ;
+    const uint64_t	IV4 = 0x510e527fade682d1ULL ;
+    const uint64_t	IV5 = 0x9b05688c2b3e6c1fULL ;
+    const uint64_t	IV6 = 0x1f83d9abfb41bd6bULL ;
+    const uint64_t	IV7 = 0x5be0cd19137e2179ULL ;
+
+    void	Compress (uint64_t *chain, const void *message, uint64_t t0, uint64_t t1, uint64_t f0, uint64_t f1) ;
 }	/* end of [namespace BLAKE2] */
 
 inline bool	operator == (const BLAKE2::Digest &a, const BLAKE2::Digest &b) {

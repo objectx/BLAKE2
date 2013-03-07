@@ -60,8 +60,34 @@ static void	Test_Parameter () {
     }
 }
 
+static void	TestCompress () {
+    uint64_t	h [8] ;
+    h [0] = BLAKE2::IV0 ;
+    h [1] = BLAKE2::IV1 ;
+    h [2] = BLAKE2::IV2 ;
+    h [3] = BLAKE2::IV3 ;
+    h [4] = BLAKE2::IV4 ;
+    h [5] = BLAKE2::IV5 ;
+    h [6] = BLAKE2::IV6 ;
+    h [7] = BLAKE2::IV7 ;
+
+    uint8_t	buf [128] ;
+    memset (buf, 0, sizeof (buf)) ;
+    BLAKE2::Compress (h, buf, 0, 0, 0, 0) ;
+
+    assert (h [0] == 0xf1328a1c44f7815eULL) ;
+    assert (h [1] == 0xe74854a9ee8dec9cULL) ;
+    assert (h [2] == 0x45680670cfd760afULL) ;
+    assert (h [3] == 0x72b4b75c361f952eULL) ;
+    assert (h [4] == 0xbf991808bb1a78d5ULL) ;
+    assert (h [5] == 0x4c5e16e9e8953d52ULL) ;
+    assert (h [6] == 0xdcd05c126f1b89f8ULL) ;
+    assert (h [7] == 0x641fbc18b236fef4ULL) ;
+}
+
 int	main (int argc, char **argv) {
     Test_Parameter () ;
+    TestCompress () ;
     if (IsDebuggerPresent ()) {
         DebugBreak () ;
     }

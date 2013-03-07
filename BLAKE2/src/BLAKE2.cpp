@@ -9,15 +9,6 @@
 static const size_t	SALT_LENGTH = 16 ;
 static const size_t	PERSONALIZATION_INFO_LENGTH = 16 ;
 
-static const uint64_t	IV0 = 0x6a09e667f3bcc908ULL ;
-static const uint64_t	IV1 = 0xbb67ae8584caa73bULL ;
-static const uint64_t	IV2 = 0x3c6ef372fe94f82bULL ;
-static const uint64_t	IV3 = 0xa54ff53a5f1d36f1ULL ;
-static const uint64_t	IV4 = 0x510e527fade682d1ULL ;
-static const uint64_t	IV5 = 0x9b05688c2b3e6c1fULL ;
-static const uint64_t	IV6 = 0x1f83d9abfb41bd6bULL ;
-static const uint64_t	IV7 = 0x5be0cd19137e2179ULL ;
-
 static const uint8_t	sigma [12][16] = {
   {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 } ,
   { 14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3 } ,
