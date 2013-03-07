@@ -362,14 +362,12 @@ int blake2b( uint8_t *out, const void *in, const void *key, const uint8_t outlen
 #include <string.h>
 #include "blake2-kat.h"
 
-static void	dump_compress () {
+static void	dump_compress (const uint8_t buf [BLAKE2B_BLOCKBYTES]) {
     int	i ;
     blake2b_state	S ;
-    uint8_t	tmp [BLAKE2B_BLOCKBYTES] ;
 
-    memset (tmp, 0, sizeof (tmp)) ;
     blake2b_init0 (&S) ;
-    blake2b_compress (&S, tmp) ;
+    blake2b_compress (&S, buf) ;
 
     printf ("%016I64x", S.h [0]) ;
 
@@ -379,12 +377,25 @@ static void	dump_compress () {
     printf ("\n") ;
 }
 
+static void	test_compress () {
+    uint8_t	buf [BLAKE2B_BLOCKBYTES] ;
+    memset (buf, 0, sizeof (buf)) ;
+
+    dump_compress (buf) ;
+    memset (buf, 0, sizeof (buf)) ;
+    int_fast32_t	i ;
+    for (i = 0 ; i < BLAKE2B_BLOCKBYTES ; ++i) {
+	buf [i] = i & 0xFF ;
+    }
+    dump_compress (buf) ;
+}
+
 int main( int argc, char **argv )
 {
   uint8_t key[BLAKE2B_KEYBYTES];
   uint8_t buf[KAT_LENGTH];
 
-  dump_compress () ;
+  test_compress () ;
   for( size_t i = 0; i < BLAKE2B_KEYBYTES; ++i )
     key[i] = ( uint8_t )i;
 

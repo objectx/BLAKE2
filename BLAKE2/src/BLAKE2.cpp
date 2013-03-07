@@ -84,13 +84,13 @@ namespace BLAKE2 {
     static inline uint64_t	load64 (const void *start) {
 	const uint8_t *	p = static_cast<const uint8_t *> (start) ;
 	return ((static_cast<uint64_t> (p [0]) <<  0) |
-		(static_cast<uint64_t> (p [0]) <<  8) |
-		(static_cast<uint64_t> (p [0]) << 16) |
-		(static_cast<uint64_t> (p [0]) << 24) |
-		(static_cast<uint64_t> (p [0]) << 32) |
-		(static_cast<uint64_t> (p [0]) << 40) |
-		(static_cast<uint64_t> (p [0]) << 48) |
-		(static_cast<uint64_t> (p [0]) << 56)) ;
+		(static_cast<uint64_t> (p [1]) <<  8) |
+		(static_cast<uint64_t> (p [2]) << 16) |
+		(static_cast<uint64_t> (p [3]) << 24) |
+		(static_cast<uint64_t> (p [4]) << 32) |
+		(static_cast<uint64_t> (p [5]) << 40) |
+		(static_cast<uint64_t> (p [6]) << 48) |
+		(static_cast<uint64_t> (p [7]) << 56)) ;
     }
 
     static inline uint_fast64_t	rotr (uint64_t value, int cnt) {
@@ -140,11 +140,13 @@ namespace BLAKE2 {
 	uint_fast64_t	v15 = IV7 ^ f1 ;
 
 #define	G(R_, I_, A_, B_, C_, D_)	do {			\
-	(A_) = (A_) + (B_) + m [sigma [R_][2 * (I_) + 0]] ;	\
+	uint_fast64_t	m0 = m [sigma [R_][2 * (I_) + 0]] ;	\
+	uint_fast64_t	m1 = m [sigma [R_][2 * (I_) + 1]] ;	\
+	(A_) = (A_) + (B_) + m0 ;				\
 	(D_) = rotr ((D_) ^ (A_), 32) ;				\
 	(C_) = (C_) + (D_) ;					\
 	(B_) = rotr ((B_) ^ (C_), 24) ;				\
-	(A_) = (A_) + (B_) + m [sigma [R_][2 * (I_) + 1]] ;	\
+	(A_) = (A_) + (B_) + m1 ;				\
 	(D_) = rotr ((D_) ^ (A_), 16) ;				\
 	(C_) = (C_) + (D_) ;					\
 	(B_) = rotr ((B_) ^ (C_), 63) ;				\

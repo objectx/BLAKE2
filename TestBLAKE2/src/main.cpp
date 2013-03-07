@@ -83,6 +83,38 @@ static void	TestCompress () {
     assert (h [5] == 0x4c5e16e9e8953d52ULL) ;
     assert (h [6] == 0xdcd05c126f1b89f8ULL) ;
     assert (h [7] == 0x641fbc18b236fef4ULL) ;
+    std::cerr << put_hex (h [0], 16) ;
+    for (int_fast32_t i = 1 ; i < 8 ; ++i) {
+        std::cerr << ' ' << put_hex (h [i], 16) ;
+    }
+    std::cerr << std::endl ;
+
+    memset (buf, 0, sizeof (buf)) ;
+    for (int_fast32_t i = 0 ; i < sizeof (buf) ; ++i) {
+        buf [i] = i & 0xFFu ;
+    }
+    h [0] = BLAKE2::IV0 ;
+    h [1] = BLAKE2::IV1 ;
+    h [2] = BLAKE2::IV2 ;
+    h [3] = BLAKE2::IV3 ;
+    h [4] = BLAKE2::IV4 ;
+    h [5] = BLAKE2::IV5 ;
+    h [6] = BLAKE2::IV6 ;
+    h [7] = BLAKE2::IV7 ;
+    BLAKE2::Compress (h, buf, 0, 0, 0, 0) ;
+    assert (h [0] == 0x2a097e2ae10e82f0ULL) ;
+    assert (h [1] == 0xab2851c5c554f980ULL) ;
+    assert (h [2] == 0x8dbdc34bf0ce0684ULL) ;
+    assert (h [3] == 0x13a21e79fc146b71ULL) ;
+    assert (h [4] == 0xe7acaa395c23cd9fULL) ;
+    assert (h [5] == 0x33d34266df5d3f1dULL) ;
+    assert (h [6] == 0x7b79d5db78ca092dULL) ;
+    assert (h [7] == 0xd60484e4b41d6ab6ULL) ;
+    std::cerr << put_hex (h [0], 16) ;
+    for (int_fast32_t i = 1 ; i < 8 ; ++i) {
+        std::cerr << ' ' << put_hex (h [i], 16) ;
+    }
+    std::cerr << std::endl ;
 }
 
 int	main (int argc, char **argv) {
