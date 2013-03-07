@@ -25,6 +25,15 @@ static const uint8_t	sigma [12][16] = {
   { 14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3 }
 } ;
 
+static const uint64_t	IV0 = 0x6a09e667f3bcc908ULL ;
+static const uint64_t	IV1 = 0xbb67ae8584caa73bULL ;
+static const uint64_t	IV2 = 0x3c6ef372fe94f82bULL ;
+static const uint64_t	IV3 = 0xa54ff53a5f1d36f1ULL ;
+static const uint64_t	IV4 = 0x510e527fade682d1ULL ;
+static const uint64_t	IV5 = 0x9b05688c2b3e6c1fULL ;
+static const uint64_t	IV6 = 0x1f83d9abfb41bd6bULL ;
+static const uint64_t	IV7 = 0x5be0cd19137e2179ULL ;
+
 #define	ARRAY_SIZE(X_)	(sizeof (X_) / sizeof ((X_) [0]))
 
 namespace BLAKE2 {
@@ -81,6 +90,17 @@ namespace BLAKE2 {
         return Digest () ;
     }
 
+    void	InitializeChain (uint64_t *chain) {
+	chain [0] = IV0 ;
+	chain [1] = IV1 ;
+	chain [2] = IV2 ;
+	chain [3] = IV3 ;
+	chain [4] = IV4 ;
+	chain [5] = IV5 ;
+	chain [6] = IV6 ;
+	chain [7] = IV7 ;
+    }
+
     static inline uint64_t	load64 (const void *start) {
 	const uint8_t *	p = static_cast<const uint8_t *> (start) ;
 	return ((static_cast<uint64_t> (p [0]) <<  0) |
@@ -100,6 +120,8 @@ namespace BLAKE2 {
 	return (value >> cnt) | (value << (64 - cnt)) ;
 #endif
     }
+
+
     void	Compress (uint64_t *chain, const void *message, uint64_t t0, uint64_t t1, uint64_t f0, uint64_t f1) {
 	const uint8_t *	msg = static_cast<const uint8_t *> (message) ;
 

@@ -62,15 +62,8 @@ static void	Test_Parameter () {
 
 static void	TestCompress () {
     uint64_t	h [8] ;
-    h [0] = BLAKE2::IV0 ;
-    h [1] = BLAKE2::IV1 ;
-    h [2] = BLAKE2::IV2 ;
-    h [3] = BLAKE2::IV3 ;
-    h [4] = BLAKE2::IV4 ;
-    h [5] = BLAKE2::IV5 ;
-    h [6] = BLAKE2::IV6 ;
-    h [7] = BLAKE2::IV7 ;
 
+    BLAKE2::InitializeChain (h) ;
     uint8_t	buf [128] ;
     memset (buf, 0, sizeof (buf)) ;
     BLAKE2::Compress (h, buf, 0, 0, 0, 0) ;
@@ -93,14 +86,8 @@ static void	TestCompress () {
     for (int_fast32_t i = 0 ; i < sizeof (buf) ; ++i) {
         buf [i] = i & 0xFFu ;
     }
-    h [0] = BLAKE2::IV0 ;
-    h [1] = BLAKE2::IV1 ;
-    h [2] = BLAKE2::IV2 ;
-    h [3] = BLAKE2::IV3 ;
-    h [4] = BLAKE2::IV4 ;
-    h [5] = BLAKE2::IV5 ;
-    h [6] = BLAKE2::IV6 ;
-    h [7] = BLAKE2::IV7 ;
+
+    BLAKE2::InitializeChain (h) ;
     BLAKE2::Compress (h, buf, 0, 0, 0, 0) ;
     assert (h [0] == 0x2a097e2ae10e82f0ULL) ;
     assert (h [1] == 0xab2851c5c554f980ULL) ;
