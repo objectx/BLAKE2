@@ -8,6 +8,7 @@
 
 static const size_t	SALT_LENGTH = 16 ;
 static const size_t	PERSONALIZATION_INFO_LENGTH = 16 ;
+static const size_t	MAX_KEY_LENGTH = 64 ;
 
 static const uint8_t	sigma [12][16] = {
   {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 } ,
@@ -232,23 +233,42 @@ namespace BLAKE2 {
     Generator::~Generator () {
 	free (buffer_) ;
     }
+
     Generator::Generator (const parameter_t &param)
         : t0_ (0)
         , t1_ (0)
         , used_ (0)
         , flags_ (0)
         , buffer_ (0) {
-	InitializeChain (h_, param) ;
 	buffer_ = static_cast<uint8_t *> (malloc (BUFFER_SIZE)) ;
+	InitializeChain (h_, param) ;
     }
+
     Generator::Generator (const parameter_t &param, const void *key, size_t key_len)
-        : t0_ (0)
+	: t0_ (0)
         , t1_ (0)
         , used_ (0)
         , flags_ (0)
         , buffer_ (0) {
-	InitializeChain (h_, param) ;
 	buffer_ = static_cast<uint8_t *> (malloc (BUFFER_SIZE)) ;
+
+	if (key == 0 || key_len == 0) {
+	    InitializeChain (h_, param) ;
+	}
+	else {
+	    uint8_t	k_len = static_cast<uint8_t> (std::min (key_len, MAX_KEY_LENGTH)) ;
+
+	    parameter_t &	tmp_param = *(reinterpret_cast<parameter_t *> (buffer_)) ;
+	    memcpy (tmp_param, param, sizeof (parameter_t)) ;
+
+	    ParameterView (tmp_param).SetKeyLength (k_len) ;
+
+	    InitializeChain (h_, tmp_param) ;
+
+	    memset (buffer_, 0, BLOCK_SIZE) ;
+	    memcpy (buffer_, key, k_len) ;
+	    used_ = BLOCK_SIZE ;
+	}
     }
 
     Generator &	Generator::Update (const void *data, size_t size) {
