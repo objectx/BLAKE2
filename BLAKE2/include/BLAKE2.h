@@ -113,9 +113,16 @@ namespace BLAKE2 {
         Digest () {
             ::memset (h_, 0, sizeof (h_)) ;
         }
-	Digest (const uint64_t h [8]) {
-	    h_ [0] = h [0] ; h_ [1] = h [1] ; h_ [2] = h [2] ; h_ [3] = h [3] ;
-	    h_ [4] = h [4] ; h_ [5] = h [5] ; h_ [6] = h [6] ; h_ [7] = h [7] ;
+	Digest (uint64_t h0, uint64_t h1, uint64_t h2, uint64_t h3,
+		uint64_t h4, uint64_t h5, uint64_t h6, uint64_t h7) {
+	    h_ [0] = h0 ;
+	    h_ [1] = h1 ;
+	    h_ [2] = h2 ;
+	    h_ [3] = h3 ;
+	    h_ [4] = h4 ;
+	    h_ [5] = h5 ;
+	    h_ [6] = h6 ;
+	    h_ [7] = h7 ;
 	}
         Digest (const Digest &src) {
             ::memcpy (h_, src.h_, sizeof (h_)) ;

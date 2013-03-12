@@ -307,7 +307,7 @@ namespace BLAKE2 {
 	memset (buffer_ + used_, 0, BUFFER_SIZE - used_) ;	// 0 padding.
 	Compress (h_, buffer_, t0_, t1_, ~0uLL, 0) ;
 	flags_ |= (1u << BIT_FINALIZED) ;
-	return Digest (h_) ;
+	return Digest (h_ [0], h_ [1], h_ [2], h_ [3], h_ [4], h_ [5], h_ [6], h_ [7]) ;
     }
 }	/* end of [namespace BLAKE2] */
 /*
