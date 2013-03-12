@@ -38,6 +38,16 @@ static const uint64_t	IV7 = 0x5be0cd19137e2179ULL ;
 
 namespace BLAKE2 {
 
+    /**
+     * Increments 128bits counter by V.
+     */
+    static inline void	inc_counter (uint64_t &t0, uint64_t &t1, size_t v) {
+	t0 += v ;
+	if (t0 < v) {
+	    ++t1 ;
+	}
+    }
+
     uint_fast8_t	GetByte (const parameter_t &P, size_t offset) {
 	size_t	off = offset >> 3 ;
 	size_t	rem = offset & 0x7u ;
@@ -99,6 +109,17 @@ namespace BLAKE2 {
 	chain [5] = IV5 ;
 	chain [6] = IV6 ;
 	chain [7] = IV7 ;
+    }
+
+    void	InitializeChain (uint64_t *chain, const parameter_t &param) {
+	chain [0] = IV0 ^ param [0] ;
+	chain [1] = IV1 ^ param [1] ;
+	chain [2] = IV2 ^ param [2] ;
+	chain [3] = IV3 ^ param [3] ;
+	chain [4] = IV4 ^ param [4] ;
+	chain [5] = IV5 ^ param [5] ;
+	chain [6] = IV6 ^ param [6] ;
+	chain [7] = IV7 ^ param [7] ;
     }
 
     static inline uint64_t	load64 (const void *start) {
@@ -209,66 +230,64 @@ namespace BLAKE2 {
     }
 
     Generator::~Generator () {
-	free (work_) ;
+	free (buffer_) ;
     }
     Generator::Generator (const parameter_t &param)
         : t0_ (0)
         , t1_ (0)
         , used_ (0)
         , flags_ (0)
-        , work_ (0) {
-	work_ = static_cast<uint8_t *> (malloc (8 * sizeof (uint64_t) + 128)) ;
+        , buffer_ (0) {
+	InitializeChain (h_, param) ;
+	buffer_ = static_cast<uint8_t *> (malloc (BUFFER_SIZE)) ;
     }
     Generator::Generator (const parameter_t &param, const void *key, size_t key_len)
         : t0_ (0)
         , t1_ (0)
         , used_ (0)
         , flags_ (0)
-        , work_ (0) {
-	work_ = static_cast<uint8_t *> (malloc (8 * sizeof (uint64_t) + 128)) ;
+        , buffer_ (0) {
+	InitializeChain (h_, param) ;
+	buffer_ = static_cast<uint8_t *> (malloc (BUFFER_SIZE)) ;
     }
 
     Generator &	Generator::Update (const void *data, size_t size) {
-	uint64_t *	H = reinterpret_cast<uint64_t *> (work_) ;
-	uint8_t *	buffer = work_ + (8 * sizeof (uint64_t)) ;
-	const uint8_t *	src = static_cast<const uint8_t *> (data) ;
+	if (0 < size) {
+	    const uint8_t *	src = static_cast<const uint8_t *> (data) ;
 
-	while (0 < size) {
-	    if (used_ == 0) {
-		if (size < BLOCK_SIZE) {
-		    memcpy (buffer, src, size) ;
+	    while (true) {
+		size_t	remain = BUFFER_SIZE - used_ ;
+
+		if (size <= remain) {
+		    memcpy (buffer_ + used_, src, size) ;
 		    used_ += static_cast<int32_t> (size) ;
 		    break ;
 		}
-		// Special case: Avoid copying.
-		// BLOCK_SIZE <= size
-		// TODO: Perform hash computation directly onto SRC.
-		Compress (H, src, t0_, t1_, 0, 0) ;
-		t0_ += BLOCK_SIZE ;
-		if (t0_ < BLOCK_SIZE) {
-		    ++t1_ ;
-		}
-		used_ = 0 ;
-		size -= BLOCK_SIZE ;
-		src += BLOCK_SIZE ;
-	    }
-	    else {
-		size_t	remain = BLOCK_SIZE - used_ ;
-		if (size < remain) {
-		    memcpy (buffer + used_, src, size) ;
-		    used_ += static_cast<int32_t> (size) ;
-		    break ;
-		}
-		// remain <= size
-		memcpy (buffer + used_, src, remain) ;
-		// Buffer is filled up.  Perform flush.
-		Compress (H, buffer, t0_, t1_, 0, 0) ;
-		used_ = 0 ;
-		size -= remain ;
+		// 0 < (size - remain)
+		memcpy (buffer_ + used_, src, remain) ;
+		inc_counter (t0_, t1_, BLOCK_SIZE) ;
+		Compress (h_, buffer_, t0_, t1_, 0, 0) ;
+		memcpy (buffer_, buffer_ + BLOCK_SIZE, BLOCK_SIZE) ;
+		used_ = BLOCK_SIZE ;
 		src += remain ;
+		size -= remain ;
 	    }
 	}
 	return *this ;
+    }
+
+    Digest	Generator::Finalize () {
+	if (BLOCK_SIZE < used_) {
+	    inc_counter (t0_, t1_, BLOCK_SIZE) ;
+	    Compress (h_, buffer_, t0_, t1_, 0, 0) ;
+	    used_ -= BLOCK_SIZE ;
+	    memcpy (buffer_, buffer_ + BLOCK_SIZE, used_) ;
+	}
+	inc_counter (t0_, t1_, used_) ;
+	memset (buffer_ + used_, 0, BUFFER_SIZE - used_) ;	// 0 padding.
+	Compress (h_, buffer_, t0_, t1_, ~0uLL, 0) ;
+	flags_ |= (1u << BIT_FINALIZED) ;
+	return Digest (h_) ;
     }
 }	/* end of [namespace BLAKE2] */
 /*

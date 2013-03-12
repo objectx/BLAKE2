@@ -106,12 +106,17 @@ namespace BLAKE2 {
      * 512bits digest value.
      */
     class Digest {
+	friend class Generator ;
     private:
 	uint64_t	h_ [8] ;
     public:
         Digest () {
             ::memset (h_, 0, sizeof (h_)) ;
         }
+	Digest (const uint64_t h [8]) {
+	    h_ [0] = h [0] ; h_ [1] = h [1] ; h_ [2] = h [2] ; h_ [3] = h [3] ;
+	    h_ [4] = h [4] ; h_ [5] = h [5] ; h_ [6] = h [6] ; h_ [7] = h [7] ;
+	}
         Digest (const Digest &src) {
             ::memcpy (h_, src.h_, sizeof (h_)) ;
         }
@@ -142,24 +147,25 @@ namespace BLAKE2 {
 	    BIT_FINALIZED = 0,
 	    BIT_LAST_NODE = 1
 	} ;
+	static const size_t	BUFFER_SIZE = 2 * BLOCK_SIZE ;
     private:
+	uint64_t	h_ [8] ;
 	uint64_t	t0_ ;
 	uint64_t	t1_ ;
 	int32_t		used_ ;
 	uint32_t	flags_ ;
-	uint8_t *	work_ ;
+	uint8_t *	buffer_ ;
 	/*
-	 * work_ --> +----------------+
-	 *           |     H_ [0]     |
-	 *           |     H_ [1]     |
-	 *                    :
-	 *           |     H_ [6]     |
-	 *           |     H_ [7]     |
-	 *           +----------------+
-	 *           |                |
-	 *           :    128bytes    :
-	 *           |                |
-	 *           +----------------+
+	 * buffer_ --> +----------------+
+	 *             |                |
+	 *             :    128bytes    :
+	 *             |                |
+	 *             +----------------+
+	 *             |                |
+	 *             :    128bytes    :
+	 *             |                |
+	 *             +----------------+
+         * Note: Due to last block compression scheme, we must hold the last message.
 	 */
     public:
 	~Generator () ;
@@ -176,6 +182,7 @@ namespace BLAKE2 {
 	}
     } ;
     void	InitializeChain (uint64_t *chain) ;
+    void	InitializeChain (uint64_t *chain, const parameter_t &param) ;
     void	Compress (uint64_t *chain, const void *message, uint64_t t0, uint64_t t1, uint64_t f0, uint64_t f1) ;
 }	/* end of [namespace BLAKE2] */
 
