@@ -49,14 +49,14 @@ namespace BLAKE2 {
 	}
     }
 
-    uint_fast8_t	GetByte (const parameter_t &P, size_t offset) {
+    uint_fast8_t	GetUInt8 (const parameter_t &P, size_t offset) {
 	size_t	off = offset >> 3 ;
 	size_t	rem = offset & 0x7u ;
 	assert (off < ARRAY_SIZE (P)) ;
 	return static_cast<uint_fast8_t> (P [off] >> (8 * rem)) ;
     }
 
-    parameter_t &	SetByte (parameter_t &P, size_t offset, uint8_t value) {
+    parameter_t &	SetUInt8 (parameter_t &P, size_t offset, uint8_t value) {
 	size_t	off = offset >> 3 ;
 	size_t	rem = offset & 0x7u ;
 	assert (off < ARRAY_SIZE (P)) ;
@@ -67,36 +67,39 @@ namespace BLAKE2 {
 	return P ;
     }
 
-    ParameterView::ParameterView (parameter_t &p) : p_ (&p) {
-	::memset (*p_, 0, sizeof (*p_)) ;
-	SetDigestLength (64).SetFanout (1).SetDepth (1) ;
+    parameter_t &	SetDefault (parameter_t &P) {
+	::memset (&P, 0, sizeof (parameter_t)) ;
+	P [0] = ((64uLL <<  0) |	// Digest Length
+		 ( 1uLL << 16) |	// Fanout
+		 ( 1uLL << 24)) ;	// Depth
+	return P ;
     }
-    void	ParameterView::GetSalt (void *buffer, size_t buffer_length) {
-	parameter_t &	P = *p_ ;
-	::memcpy (buffer, &P [4], std::min (SALT_LENGTH, buffer_length)) ;
+
+    void	GetSalt (const parameter_t &p, void *buffer, size_t buffer_length) {
+	::memcpy (buffer, &p [4], std::min (SALT_LENGTH, buffer_length)) ;
     }
-    ParameterView &	ParameterView::SetSalt (const void *data, size_t length) {
-	parameter_t &	P = *p_ ;
-	::memset (&P [4], 0, SALT_LENGTH) ;
-	::memcpy (&P [4], data, std::min (length, SALT_LENGTH)) ;
-	return *this ;
+
+    void	SetSalt (parameter_t &p, const void *data, size_t length) {
+	::memset (&p [4], 0, SALT_LENGTH) ;
+	::memcpy (&p [4], data, std::min (length, SALT_LENGTH)) ;
     }
-    void	ParameterView::GetPersonalizationData (void *buffer, size_t buffer_length) {
-	::memcpy (buffer, &(*p_) [6], std::min (PERSONALIZATION_INFO_LENGTH, buffer_length)) ;
+
+    void	GetPersonalizationData (const parameter_t &p, void *buffer, size_t buffer_length) {
+	::memcpy (buffer, &p [6], std::min (PERSONALIZATION_INFO_LENGTH, buffer_length)) ;
     }
-    ParameterView &	ParameterView::SetPersonalizationData (const void *data, size_t length) {
-	parameter_t &	P = *p_ ;
-	::memset (&P [6], 0, PERSONALIZATION_INFO_LENGTH) ;
-	::memcpy (&P [6], data, std::min (length, PERSONALIZATION_INFO_LENGTH)) ;
-	return *this ;
+
+    void	SetPersonalizationData (parameter_t &p, const void *data, size_t length) {
+	::memset (&p [6], 0, PERSONALIZATION_INFO_LENGTH) ;
+	::memcpy (&p [6], data, std::min (length, PERSONALIZATION_INFO_LENGTH)) ;
     }
-    void	ParameterView::GetBytes (void *buffer, size_t buffer_length) const {
-	parameter_t &	P = *p_ ;
-	uint8_t *	p = static_cast<uint8_t *> (buffer) ;
-        for (int_fast32_t i = 0 ; i < buffer_length ; ++i) {
-            P [i] = GetByte (P, i) ;
-        }
+
+    void	GetBytes (const parameter_t &p, void *buffer, size_t buffer_length) {
+	uint8_t *	P = static_cast<uint8_t *> (buffer) ;
+	for (size_t i = 0 ; i < buffer_length ; ++i) {
+	    P [i] = GetUInt8 (p, i) ;
+	}
     }
+
     Digest	Apply (const void *key, size_t key_length, const void *data, size_t data_length) {
         return Digest () ;
     }
@@ -261,7 +264,8 @@ namespace BLAKE2 {
 	    parameter_t &	tmp_param = *(reinterpret_cast<parameter_t *> (buffer_)) ;
 	    memcpy (tmp_param, param, sizeof (parameter_t)) ;
 
-	    ParameterView (tmp_param).SetKeyLength (k_len) ;
+
+            KeyLength (tmp_param) = k_len ;
 
 	    InitializeChain (h_, tmp_param) ;
 

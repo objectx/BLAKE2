@@ -20,87 +20,87 @@ namespace BLAKE2 {
 
     typedef uint64_t	parameter_t [8] ;
 
-    uint_fast8_t	GetByte (const parameter_t &P, size_t offset) ;
-    parameter_t &	SetByte (parameter_t &P, size_t offset, uint8_t value) ;
+    parameter_t &	SetDefault (parameter_t &P) ;
 
-    /**
-     * Gets/Sets BLAKE2 parameters.
-     */
-    class ParameterView {
-    public:
-	static size_t const	SIZE = 8 * 8 ;
-    private:
-	parameter_t *	p_ ;
-    public:
-	ParameterView (parameter_t &p) ;
-	ParameterView &	Attach (parameter_t &p) {
-	    p_ = &p ;
-	}
-	uint_fast8_t	GetDigestLength () const {
-	    return GetByte (*p_, 0) ;
-	}
-	ParameterView &	SetDigestLength (uint8_t value) {
-	    SetByte (*p_, 0, value) ;
-	    return *this ;
-	}
-	uint_fast8_t	GetKeyLength () const {
-	    return GetByte (*p_, 1) ;
-	}
-	ParameterView &	SetKeyLength (uint8_t value) {
-	    SetByte (*p_, 1, value) ;
-	    return *this ;
-	}
-	uint_fast8_t	GetFanout () const {
-	    return GetByte (*p_, 2) ;
-	}
-	ParameterView &	SetFanout (uint8_t value) {
-	    SetByte (*p_, 2, value) ;
-	    return *this ;
-	}
-	uint_fast8_t	GetDepth () const {
-	    return GetByte (*p_, 3) ;
-	}
-	ParameterView &	SetDepth (uint8_t value) {
-	    SetByte (*p_, 3, value) ;
-	    return *this ;
-	}
-	uint_fast32_t	GetLeafLength () const {
-	    return static_cast<uint_fast32_t> ((*p_) [0] >> 32) ;
-	}
-	ParameterView &	SetLeafLength (uint32_t value) {
-	    uint_fast64_t	mask = 0xFFFFFFFFu ;
-	    parameter_t &	P = *p_ ;
-	    P [0] = (P [0] & ~(mask << 32)) | (static_cast<uint_fast64_t> (value) << 32) ;
-	    return *this ;
-	}
-	uint_fast64_t	GetNodeOffset () const {
-	    return (*p_) [1] ;
-	}
-	ParameterView &	SetNodeOffset (uint64_t offset) {
-	    (*p_) [1] = offset ;
-	    return *this ;
-	}
-	uint_fast8_t	GetNodeDepth () const {
-	    return GetByte (*p_, 16) ;
-	}
-	ParameterView &	SetNodeDepth (uint8_t value) {
-	    SetByte (*p_, 16, value) ;
-	    return *this ;
-	}
-	uint_fast8_t	GetInnerLength () const {
-	    return GetByte (*p_, 17) ;
-	}
-	ParameterView &	SetInnerLength (uint8_t value) {
-	    SetByte (*p_, 17, value) ;
-	    return *this ;
-	}
-	void		GetSalt (void *buffer, size_t buffer_length) ;
-	ParameterView &	SetSalt (const void *data, size_t length) ;
-	void		GetPersonalizationData (void *buffer, size_t buffer_length) ;
-	ParameterView &	SetPersonalizationData (const void *data, size_t length) ;
+    uint_fast8_t	GetUInt8 (const parameter_t &P, size_t offset) ;
+    parameter_t &	SetUInt8 (parameter_t &P, size_t offset, uint8_t value) ;
 
-	void	GetBytes (void *buffer, size_t buffer_length) const ;
+    struct proxy8 {
+	parameter_t &	p_ ;
+	size_t		off_ ;
+	proxy8 (parameter_t &p, size_t off) : p_ (p), off_ (off) {
+	    /* NO-OP */
+	}
+	uint_fast8_t	GetValue () const {
+	    return GetUInt8 (p_, off_) ;
+	}
+	void	SetValue (uint8_t value) {
+	    SetUInt8 (p_, off_, value) ;
+	}
+	operator uint_fast8_t () const {
+	    return GetValue () ;
+	}
+	void	operator = (uint8_t value) {
+	    return SetValue (value) ;
+	}
     } ;
+
+    inline const proxy8	DigestLength (const parameter_t &p) {
+	return proxy8 (const_cast<parameter_t &> (p), 0) ;
+    }
+    inline       proxy8	DigestLength (parameter_t &p) {
+	return proxy8 (p, 0) ;
+    }
+    inline const proxy8	KeyLength (const parameter_t &p) {
+	return proxy8 (const_cast<parameter_t &> (p), 1) ;
+    }
+    inline       proxy8	KeyLength (parameter_t &p) {
+	return proxy8 (p, 1) ;
+    }
+    inline const proxy8	Fanout (const parameter_t &p) {
+	return proxy8 (const_cast<parameter_t &> (p), 2) ;
+    }
+    inline       proxy8	Fanout (parameter_t &p) {
+	return proxy8 (p, 2) ;
+    }
+    inline const proxy8	Depth (const parameter_t &p) {
+	return proxy8 (const_cast<parameter_t &> (p), 3) ;
+    }
+    inline       proxy8	Depth (parameter_t &p) {
+	return proxy8 (p, 3) ;
+    }
+    inline const proxy8	NodeDepth (const parameter_t &p) {
+	return proxy8 (const_cast<parameter_t &> (p), 16) ;
+    }
+    inline       proxy8	NodeDepth (parameter_t &p) {
+	return proxy8 (p, 16) ;
+    }
+    inline const proxy8	InnerLength (const parameter_t &p) {
+	return proxy8 (const_cast<parameter_t &> (p), 17) ;
+    }
+    inline       proxy8	InnnerLength (parameter_t &p) {
+	return proxy8 (p, 17) ;
+    }
+
+    inline uint_fast32_t	GetLeafLength (const parameter_t &p) {
+	    return static_cast<uint_fast32_t> (p [0] >> 32) ;
+    }
+    inline void	SetLeafLength (parameter_t &p, uint32_t value) {
+	uint_fast64_t	mask = 0xFFFFFFFFu ;
+	p [0] = (p [0] & ~(mask << 32)) | (static_cast<uint_fast64_t> (value) << 32) ;
+    }
+    inline uint_fast64_t	GetNodeOffset (const parameter_t &p) {
+	return p [1] ;
+    }
+    inline void	SetNodeOffset (parameter_t &p, uint64_t value) {
+	p [1] = value ;
+    }
+
+    void	GetSalt (const parameter_t &p, void *buffer, size_t buffer_length) ;
+    void	SetSalt (parameter_t &p, const void *data, size_t length) ;
+    void	GetPersonalizationData (const parameter_t &p, void *buffer, size_t buffer_length) ;
+    void	SetPersonalizationData (parameter_t &p, const void *buffer, size_t buffer_length) ;
+    void	GetBytes (const parameter_t &p, void *buffer, size_t buffer_length) ;
 
     /**
      * 512bits digest value.
