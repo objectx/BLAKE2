@@ -312,6 +312,11 @@ namespace BLAKE2 {
 
     Digest	Apply (const void *key, size_t key_length, const void *data, size_t data_length) {
 	parameter_t	param ;
+	SetDefault (param) ;
+	return Apply (param, key, key_length, data, data_length) ;
+    }
+
+    Digest	Apply (const parameter_t &param, const void *key, size_t key_length, const void *data, size_t data_length) {
 	uint64_t	H [8] ;
 	uint_fast64_t	t0 = 0 ;
 	uint_fast64_t	t1 = 0 ;
@@ -320,38 +325,48 @@ namespace BLAKE2 {
 	size_t		sz = 0 ;
 	const uint8_t *	src = static_cast<const uint8_t *> (data) ;
 
-	SetDefault (param) ;
-#if	0
 	if (key == 0 || key_length == 0) {
 	    InitializeChain (H, param) ;
 	    if (cnt_blocks == 0) {
-		// TODO: Check this case.
-		Compress (H, buffer, ~0uLL, 0) ;
+                memset (buffer, 0, sizeof (buffer)) ;
+                inc_counter (t0, t1, 0) ;
+		Compress (H, buffer, t0, t1, ~0uLL, 0) ;	// Applied to all 0 block.
 		return Digest (H [0], H [1], H [2], H [3], H [4], H [5], H [6], H [7]) ;
 	    }
 	}
 	else {
-	    uint8_t	k_len = static_cast<uint8_t> (std::min (key_len, MAX_KEY_LENGTH)) ;
+	    uint8_t	k_len = static_cast<uint8_t> (std::min (key_length, MAX_KEY_LENGTH)) ;
 
-	    KeyLength (param) = k_len ;
-	    InitializeChain (H, param) ;
+            parameter_t tmp_param ;
+            memcpy (&tmp_param, &param, sizeof (parameter_t)) ;
+	    KeyLength (tmp_param) = k_len ;
+	    InitializeChain (H, tmp_param) ;
 	    memset (buffer, 0, BLOCK_SIZE) ;
 	    memcpy (buffer, key, k_len) ;
 	    inc_counter (t0, t1, BLOCK_SIZE) ;
 	    if (cnt_blocks == 0) {
 		// Only key was supplied.
-		Compress (H, buffer, ~0uLL, 0) ;
+		Compress (H, buffer, t0, t1, ~0uLL, 0) ;
 		return Digest (H [0], H [1], H [2], H [3], H [4], H [5], H [6], H [7]) ;
 	    }
-	    Compress (H, buffer, 0, 0) ;
+	    Compress (H, buffer, t0, t1, 0, 0) ;
 	}
 	for (size_t i = 0 ; i < (cnt_blocks - 1) ; ++i) {
-
+	    inc_counter (t0, t1, BLOCK_SIZE) ;
+	    Compress (H, src, t0, t1, 0, 0) ;
+	    src += BLOCK_SIZE ;
+	    sz += BLOCK_SIZE ;
 	}
-#endif
-	return Digest () ;
+	// Process the last block.
+	{
+	    size_t	remain = data_length - sz ;
+	    memset (buffer, 0, BLOCK_SIZE) ;
+	    memcpy (buffer, src, remain) ;
+	    inc_counter (t0, t1, remain) ;
+	    Compress (H, buffer, t0, t1, ~0uLL, 0) ;
+	}
+	return Digest (H [0], H [1], H [2], H [3], H [4], H [5], H [6], H [7]) ;
     }
-
 }	/* end of [namespace BLAKE2] */
 /*
  * [END OF FILE]

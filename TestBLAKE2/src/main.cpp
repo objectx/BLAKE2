@@ -129,6 +129,31 @@ void	TestBLAKE2 () {
         for (size_t j = 0 ; j < 64 ; ++j) {
             assert (D.GetByte (j) == TestVector::BLAKE2 [i][j]) ;
         }
+	if (false) {
+	    std::cerr << "Digest: " << put_hex (D [0], 16) ;
+	    for (size_t k = 1 ; k < 8 ; ++k) {
+		std::cerr << ' ' << put_hex (D [k], 16) ;
+	    }
+	    std::cerr << std::endl ;
+	}
+	{
+	    BLAKE2::Digest	D2 (BLAKE2::Apply (param, key, sizeof (key), buf, i)) ;
+	    assert (D == D2) ;
+	}
+    }
+
+    for (size_t i = 0 ; i < TestVector::NUM_BLAKE2_TEST ; ++i) {
+	BLAKE2::Digest	expected (BLAKE2::Generator (param, key, sizeof (key)).Update (buf, i).Finalize ()) ;
+	BLAKE2::Digest	actual (BLAKE2::Apply (param, key, sizeof (key), buf, i)) ;
+
+	assert (actual == expected) ;
+    }
+
+    for (size_t i = 0 ; i < TestVector::NUM_BLAKE2_TEST ; ++i) {
+	BLAKE2::Digest	expected (BLAKE2::Generator (param).Update (buf, i).Finalize ()) ;
+	BLAKE2::Digest	actual (BLAKE2::Apply (0, 0, buf, i)) ;
+
+	assert (actual == expected) ;
     }
 }
 

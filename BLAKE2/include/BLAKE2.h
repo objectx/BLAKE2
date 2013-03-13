@@ -107,6 +107,8 @@ namespace BLAKE2 {
      */
     class Digest {
 	friend class Generator ;
+    public:
+	static const size_t	SIZE = 64 ;	// # of bytes in digest.
     private:
 	uint64_t	h_ [8] ;
     public:
@@ -145,6 +147,12 @@ namespace BLAKE2 {
 	    assert (off < 8) ;
 	    uint_fast64_t	v = h_ [off] ;
 	    return static_cast<uint8_t> (v >> (8 * rem)) ;
+	}
+	uint_fast64_t	At (size_t idx) const {
+	    return h_ [idx] ;
+	}
+	uint_fast64_t	operator [] (size_t idx) const {
+	    return h_ [idx] ;
 	}
     } ;
 
@@ -191,6 +199,30 @@ namespace BLAKE2 {
     void	InitializeChain (uint64_t *chain) ;
     void	InitializeChain (uint64_t *chain, const parameter_t &param) ;
     void	Compress (uint64_t *chain, const void *message, uint64_t t0, uint64_t t1, uint64_t f0, uint64_t f1) ;
+
+    /**
+     * Convenience function for generating a digest.
+     *
+     * @param key Key to apply
+     * @param key_length Key length
+     * @param data Data to compute digest
+     * @param data_length Data length
+     *
+     * @return Computed digest
+     */
+    Digest	Apply (const void *key, size_t key_length, const void *data, size_t data_length) ;
+    /**
+     * Convenience function for generating a digest.
+     *
+     * @param param Generation parameters
+     * @param key Key to apply
+     * @param key_length Key length
+     * @param data Data to compute digest
+     * @param data_length Data length
+     *
+     * @return Computed digest.
+     */
+    Digest	Apply (const parameter_t &param, const void *key, size_t key_length, const void *data, size_t data_length) ;
 }	/* end of [namespace BLAKE2] */
 
 inline bool	operator == (const BLAKE2::Digest &a, const BLAKE2::Digest &b) {
