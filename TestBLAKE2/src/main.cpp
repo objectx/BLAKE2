@@ -8,8 +8,8 @@
 #include <BLAKE2.h>
 #include "TestVector.h"
 
-static std::ostream &	operator << (std::ostream &out, const BLAKE2::parameter_t &p) {
-#define	P_(OFF_)	put_hex (BLAKE2::GetUInt8 (p, (OFF_)), 2)
+static std::ostream &	operator << (std::ostream &out, const BLAKE2::parameter_block_t &p) {
+#define	P_(OFF_)	put_hex (p [OFF_], 2)
     for (int_fast32_t i = 0 ; i < sizeof (p) ; i += 16) {
         if (0 < i) {
             out << ' ' ;
@@ -23,7 +23,7 @@ static std::ostream &	operator << (std::ostream &out, const BLAKE2::parameter_t 
     return out ;
 }
 
-static std::string	dump_parameter (const BLAKE2::parameter_t &p) {
+static std::string	dump_parameter (const BLAKE2::parameter_block_t &p) {
     std::ostringstream	out ;
     out << p << std::endl ;
     return out.str () ;
@@ -31,9 +31,8 @@ static std::string	dump_parameter (const BLAKE2::parameter_t &p) {
 
 static void	Test_Parameter () {
     {
-	BLAKE2::parameter_t	P ;
-	BLAKE2::SetDefault (P) ;
-        auto	result (dump_parameter (P)) ;
+	BLAKE2::Parameter	P ;
+        auto	result (dump_parameter (P.GetParameterBlock ())) ;
         auto	expected = ("40000101 00000000 00000000 00000000 "
 			    "00000000 00000000 00000000 00000000 "
 			    "00000000 00000000 00000000 00000000 "
@@ -44,15 +43,14 @@ static void	Test_Parameter () {
     {
 	uint8_t	salt [16] ;
 	uint8_t	personal [16] ;
-        BLAKE2::parameter_t P ;
-        BLAKE2::SetDefault (P) ;
-	BLAKE2::KeyLength (P) = 256 / 8 ;
+        BLAKE2::Parameter	P ;
+	P.SetKeyLength (256 / 8) ;
 
 	memset (salt    , 0x55, sizeof (salt)) ;
 	memset (personal, 0xee, sizeof (personal)) ;
 
-        BLAKE2::SetSalt (P, salt, sizeof (salt)) ;
-        BLAKE2::SetPersonalizationData (P, personal, sizeof (personal)) ;
+        P.SetSalt (salt, sizeof (salt)) ;
+	P.SetPersonalization (personal, sizeof (personal)) ;
 	auto	result (dump_parameter (P)) ;
 	auto	expected = ("40200101 00000000 00000000 00000000 "
 			    "00000000 00000000 00000000 00000000 "
@@ -117,8 +115,7 @@ void	TestBLAKE2 () {
     for (size_t i = 0 ; i < sizeof (buf) ; ++i) {
         buf [i] = static_cast<uint8_t> (i & 0xFF) ;
     }
-    BLAKE2::parameter_t	param ;
-    BLAKE2::SetDefault (param) ;
+    BLAKE2::Parameter	param ;
 
     for (size_t i = 0 ; i < TestVector::NUM_BLAKE2_TEST ; ++i) {
         BLAKE2::Generator	gen (param, key, sizeof (key)) ;
@@ -137,7 +134,7 @@ void	TestBLAKE2 () {
 	    std::cerr << std::endl ;
 	}
 	{
-	    BLAKE2::Digest	D2 (BLAKE2::Apply (param, key, sizeof (key), buf, i)) ;
+            BLAKE2::Digest	D2 (BLAKE2::Apply (param, key, sizeof (key), buf, i)) ;
 	    assert (D == D2) ;
 	}
     }

@@ -4,7 +4,21 @@
  * Author(s): objectx
  */
 #include <algorithm>
+#include <new>
 #include <BLAKE2.h>
+
+#if defined (_M_AMD64) || defined (_M_IX86)
+#   define TARGET_IS_LITTLE_ENDIAN		1
+#   define TARGET_ALLOWS_UNALIGNED_ACCESS	1
+#endif
+
+#if ! defined (TARGET_IS_LITTLE_ENDIAN)
+#   define TARGET_IS_LITTLE_ENDIAN		0
+#endif
+
+#if ! defined (TARGET_ALLOWS_UNALIGNED_ACCESS)
+#   define TARGET_ALLOWS_UNALIGNED_ACCESS	0
+#endif
 
 static const size_t	SALT_LENGTH = 16 ;
 static const size_t	PERSONALIZATION_INFO_LENGTH = 16 ;
@@ -39,6 +53,32 @@ static const uint64_t	IV7 = 0x5be0cd19137e2179ULL ;
 
 namespace BLAKE2 {
 
+    Parameter::Parameter () {
+	memset (&p_ [0], 0, sizeof (parameter_block_t)) ;
+	SetDigestLength (64).SetFanoutCount (1).SetDepth (1) ;
+    }
+
+    Parameter::Parameter (const parameter_block_t &param) {
+	memcpy (&p_ [0], &param [0], sizeof (parameter_block_t)) ;
+    }
+
+    Parameter &	Parameter::SetSalt (const void *salt, size_t length) {
+	memset (&p_ [OFF_SALT], 0, MAX_SALT_LENGTH) ;
+	memcpy (&p_ [OFF_SALT], salt, std::min (length, MAX_SALT_LENGTH)) ;
+	return *this ;
+    }
+
+    Parameter &	Parameter::SetPersonalization (const void *data, size_t length) {
+	memset (&p_ [OFF_PERSONALIZATION], 0, MAX_PERSONALIZATION_LENGTH) ;
+	memcpy (&p_ [OFF_PERSONALIZATION], data, std::min (length, MAX_PERSONALIZATION_LENGTH)) ;
+	return *this ;
+    }
+
+    void	Parameter::CopyTo (parameter_block_t &param) const {
+	memcpy (&param [0], &p_ [0], sizeof (parameter_block_t)) ;
+    }
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     /**
      * Increments 128bits counter by V.
      */
@@ -49,80 +89,14 @@ namespace BLAKE2 {
 	}
     }
 
-    uint_fast8_t	GetUInt8 (const parameter_t &P, size_t offset) {
-	size_t	off = offset >> 3 ;
-	size_t	rem = offset & 0x7u ;
-	assert (off < ARRAY_SIZE (P)) ;
-	return static_cast<uint_fast8_t> (P [off] >> (8 * rem)) ;
-    }
-
-    parameter_t &	SetUInt8 (parameter_t &P, size_t offset, uint8_t value) {
-	size_t	off = offset >> 3 ;
-	size_t	rem = offset & 0x7u ;
-	assert (off < ARRAY_SIZE (P)) ;
-
-	const uint_fast64_t	mask = 0xFFu ;
-	const size_t	shift = 8 * rem ;
-	P [off] = P [off] & ~(mask << shift) | (static_cast<uint_fast64_t> (value) << shift) ;
-	return P ;
-    }
-
-    parameter_t &	SetDefault (parameter_t &P) {
-	::memset (&P, 0, sizeof (parameter_t)) ;
-	P [0] = ((64uLL <<  0) |	// Digest Length
-		 ( 1uLL << 16) |	// Fanout
-		 ( 1uLL << 24)) ;	// Depth
-	return P ;
-    }
-
-    void	GetSalt (const parameter_t &p, void *buffer, size_t buffer_length) {
-	::memcpy (buffer, &p [4], std::min (SALT_LENGTH, buffer_length)) ;
-    }
-
-    void	SetSalt (parameter_t &p, const void *data, size_t length) {
-	::memset (&p [4], 0, SALT_LENGTH) ;
-	::memcpy (&p [4], data, std::min (length, SALT_LENGTH)) ;
-    }
-
-    void	GetPersonalizationData (const parameter_t &p, void *buffer, size_t buffer_length) {
-	::memcpy (buffer, &p [6], std::min (PERSONALIZATION_INFO_LENGTH, buffer_length)) ;
-    }
-
-    void	SetPersonalizationData (parameter_t &p, const void *data, size_t length) {
-	::memset (&p [6], 0, PERSONALIZATION_INFO_LENGTH) ;
-	::memcpy (&p [6], data, std::min (length, PERSONALIZATION_INFO_LENGTH)) ;
-    }
-
-    void	GetBytes (const parameter_t &p, void *buffer, size_t buffer_length) {
-	uint8_t *	P = static_cast<uint8_t *> (buffer) ;
-	for (size_t i = 0 ; i < buffer_length ; ++i) {
-	    P [i] = GetUInt8 (p, i) ;
-	}
-    }
-
-    void	InitializeChain (uint64_t *chain) {
-	chain [0] = IV0 ;
-	chain [1] = IV1 ;
-	chain [2] = IV2 ;
-	chain [3] = IV3 ;
-	chain [4] = IV4 ;
-	chain [5] = IV5 ;
-	chain [6] = IV6 ;
-	chain [7] = IV7 ;
-    }
-
-    void	InitializeChain (uint64_t *chain, const parameter_t &param) {
-	chain [0] = IV0 ^ param [0] ;
-	chain [1] = IV1 ^ param [1] ;
-	chain [2] = IV2 ^ param [2] ;
-	chain [3] = IV3 ^ param [3] ;
-	chain [4] = IV4 ^ param [4] ;
-	chain [5] = IV5 ^ param [5] ;
-	chain [6] = IV6 ^ param [6] ;
-	chain [7] = IV7 ^ param [7] ;
-    }
-
-    static inline uint64_t	load64 (const void *start) {
+    /**
+     * Loading littl-endian 64bits value.
+     *
+     * @param start The start address
+     *
+     * @return Loaded value
+     */
+    static uint64_t	generic_load64 (const void *start) {
 	const uint8_t *	p = static_cast<const uint8_t *> (start) ;
 	return ((static_cast<uint64_t> (p [0]) <<  0) |
 		(static_cast<uint64_t> (p [1]) <<  8) |
@@ -134,6 +108,20 @@ namespace BLAKE2 {
 		(static_cast<uint64_t> (p [7]) << 56)) ;
     }
 
+#if (defined (TARGET_IS_LITTLE_ENDIAN) && (TARGET_IS_LITTLE_ENDIAN != 0)) &&	\
+    (defined (TARGET_ALLOWS_UNALIGNED_ACCESS) && (TARGET_ALLOWS_UNALIGNED_ACCESS != 0))
+#   define load64(X_)	(*((const uint64_t *)(X_)))
+#else
+#   define load64(X_)	(generic_load64 (X_))
+#endif
+    /**
+     * Rotate right by CNT bits
+     *
+     * @param value Value to rotate
+     * @param cnt # of bits to rotate
+     *
+     * @return Rotated value
+     */
     static inline uint_fast64_t	rotr (uint64_t value, int cnt) {
 #if defined (_MSC_VER) && (1200 <= _MSC_VER)
 	return _rotr64 (value, cnt) ;
@@ -229,11 +217,35 @@ namespace BLAKE2 {
 	chain [7] ^= v07 ^ v15 ;
     }
 
+
+    void	InitializeChain (uint64_t *chain) {
+	chain [0] = IV0 ;
+	chain [1] = IV1 ;
+	chain [2] = IV2 ;
+	chain [3] = IV3 ;
+	chain [4] = IV4 ;
+	chain [5] = IV5 ;
+	chain [6] = IV6 ;
+	chain [7] = IV7 ;
+    }
+
+
+    void	InitializeChain (uint64_t *chain, const parameter_block_t &param) {
+	chain [0] = IV0 ^ load64 (&param [ 0]) ;
+	chain [1] = IV1 ^ load64 (&param [ 8]) ;
+	chain [2] = IV2 ^ load64 (&param [16]) ;
+	chain [3] = IV3 ^ load64 (&param [24]) ;
+	chain [4] = IV4 ^ load64 (&param [32]) ;
+	chain [5] = IV5 ^ load64 (&param [40]) ;
+	chain [6] = IV6 ^ load64 (&param [48]) ;
+	chain [7] = IV7 ^ load64 (&param [56]) ;
+    }
+
     Generator::~Generator () {
 	free (buffer_) ;
     }
 
-    Generator::Generator (const parameter_t &param)
+    Generator::Generator (const parameter_block_t &param)
         : t0_ (0)
         , t1_ (0)
         , used_ (0)
@@ -243,7 +255,7 @@ namespace BLAKE2 {
 	InitializeChain (h_, param) ;
     }
 
-    Generator::Generator (const parameter_t &param, const void *key, size_t key_len)
+    Generator::Generator (const parameter_block_t &param, const void *key, size_t key_len)
 	: t0_ (0)
         , t1_ (0)
         , used_ (0)
@@ -255,15 +267,12 @@ namespace BLAKE2 {
 	    InitializeChain (h_, param) ;
 	}
 	else {
+	    Parameter *	P = new (buffer_) Parameter (param) ;
 	    uint8_t	k_len = static_cast<uint8_t> (std::min (key_len, MAX_KEY_LENGTH)) ;
 
-	    parameter_t &	tmp_param = *(reinterpret_cast<parameter_t *> (buffer_)) ;
-	    memcpy (tmp_param, param, sizeof (parameter_t)) ;
+	    P->SetKeyLength (k_len) ;
 
-
-            KeyLength (tmp_param) = k_len ;
-
-	    InitializeChain (h_, tmp_param) ;
+	    InitializeChain (h_, P->GetParameterBlock ()) ;
 
 	    memset (buffer_, 0, BLOCK_SIZE) ;
 	    memcpy (buffer_, key, k_len) ;
@@ -311,12 +320,11 @@ namespace BLAKE2 {
     }
 
     Digest	Apply (const void *key, size_t key_length, const void *data, size_t data_length) {
-	parameter_t	param ;
-	SetDefault (param) ;
-	return Apply (param, key, key_length, data, data_length) ;
+	Parameter	param ;
+	return Apply (param.GetParameterBlock (), key, key_length, data, data_length) ;
     }
 
-    Digest	Apply (const parameter_t &param, const void *key, size_t key_length, const void *data, size_t data_length) {
+    Digest	Apply (const parameter_block_t &param, const void *key, size_t key_length, const void *data, size_t data_length) {
 	uint64_t	H [8] ;
 	uint_fast64_t	t0 = 0 ;
 	uint_fast64_t	t1 = 0 ;
@@ -337,10 +345,10 @@ namespace BLAKE2 {
 	else {
 	    uint8_t	k_len = static_cast<uint8_t> (std::min (key_length, MAX_KEY_LENGTH)) ;
 
-            parameter_t tmp_param ;
-            memcpy (&tmp_param, &param, sizeof (parameter_t)) ;
-	    KeyLength (tmp_param) = k_len ;
-	    InitializeChain (H, tmp_param) ;
+	    Parameter *	P = new (buffer) Parameter (param) ;
+	    P->SetKeyLength (k_len) ;
+	    InitializeChain (H, P->GetParameterBlock ()) ;
+
 	    memset (buffer, 0, BLOCK_SIZE) ;
 	    memcpy (buffer, key, k_len) ;
 	    inc_counter (t0, t1, BLOCK_SIZE) ;

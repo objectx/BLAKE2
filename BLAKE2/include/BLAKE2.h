@@ -18,90 +18,116 @@ namespace BLAKE2 {
 
     class Digest ;
 
-    typedef uint64_t	parameter_t [8] ;
+    typedef uint8_t	parameter_block_t [64] ;
 
-    parameter_t &	SetDefault (parameter_t &P) ;
+    class Parameter {
+    public:
+	typedef Parameter	self_t ;
+	static const size_t	  OFF_DIGEST_LENGTH   =  0
+				, OFF_KEY_LENGTH      =  1
+				, OFF_FANOUT_COUNT    =  2
+				, OFF_DEPTH           =  3
+				, OFF_LEAF_LENGTH     =  4
+				, OFF_NODE_OFFSET     =  8
+				, OFF_NODE_DEPTH      = 16
+				, OFF_INNER_LENGTH    = 17
+				, OFF_SALT            = 32
+				, OFF_PERSONALIZATION = 48 ;
+	static const size_t	MAX_SALT_LENGTH = 16 ;
+	static const size_t	MAX_PERSONALIZATION_LENGTH = 16 ;
+    private:
+	parameter_block_t	p_ ;
+    public:
+	Parameter () ;
+	Parameter (const Parameter &param) ;
+	Parameter (const parameter_block_t &param) ;
 
-    uint_fast8_t	GetUInt8 (const parameter_t &P, size_t offset) ;
-    parameter_t &	SetUInt8 (parameter_t &P, size_t offset, uint8_t value) ;
+	uint_fast8_t	GetDigestLength () const {
+	    return p_ [OFF_DIGEST_LENGTH] ;
+	}
+	self_t &	SetDigestLength (uint8_t value) {
+	    p_ [OFF_DIGEST_LENGTH] = value ;
+	    return *this ;
+	}
+	uint_fast8_t	GetKeyLength () const {
+	    return p_ [OFF_KEY_LENGTH] ;
+	}
+	self_t &	SetKeyLength (uint8_t value) {
+	    p_ [OFF_KEY_LENGTH] = value ;
+	    return *this ;
+	}
+	uint_fast8_t	GetFanoutCount () const {
+	    return p_ [OFF_FANOUT_COUNT] ;
+	}
+	self_t &	SetFanoutCount (uint8_t value) {
+	    p_ [OFF_FANOUT_COUNT] = value ;
+	    return *this ;
+	}
+	uint_fast8_t	GetDepth () const {
+	    return p_ [OFF_DEPTH] ;
+	}
+	self_t &	SetDepth (uint8_t value) {
+	    p_ [OFF_DEPTH] = value ;
+	    return *this ;
+	}
+	uint_fast32_t	GetLeafLength () const {
+	    return ((static_cast<uint32_t> (p_ [OFF_LEAF_LENGTH + 0]) <<  0) |
+		    (static_cast<uint32_t> (p_ [OFF_LEAF_LENGTH + 1]) <<  8) |
+		    (static_cast<uint32_t> (p_ [OFF_LEAF_LENGTH + 2]) << 16) |
+		    (static_cast<uint32_t> (p_ [OFF_LEAF_LENGTH + 3]) << 24)) ;
+	}
+	self_t &	SetLeafLength (uint32_t value) {
+	    p_ [OFF_LEAF_LENGTH + 0] = static_cast<uint8_t> (value >>  0) ;
+	    p_ [OFF_LEAF_LENGTH + 1] = static_cast<uint8_t> (value >>  8) ;
+	    p_ [OFF_LEAF_LENGTH + 2] = static_cast<uint8_t> (value >> 16) ;
+	    p_ [OFF_LEAF_LENGTH + 3] = static_cast<uint8_t> (value >> 24) ;
+	}
+	uint_fast64_t	GetNodeOffset () const {
+	    return ((static_cast<uint64_t> (p_ [OFF_NODE_OFFSET + 0]) <<  0) |
+		    (static_cast<uint64_t> (p_ [OFF_NODE_OFFSET + 1]) <<  8) |
+		    (static_cast<uint64_t> (p_ [OFF_NODE_OFFSET + 2]) << 16) |
+		    (static_cast<uint64_t> (p_ [OFF_NODE_OFFSET + 3]) << 24) |
+		    (static_cast<uint64_t> (p_ [OFF_NODE_OFFSET + 4]) << 32) |
+		    (static_cast<uint64_t> (p_ [OFF_NODE_OFFSET + 5]) << 40) |
+		    (static_cast<uint64_t> (p_ [OFF_NODE_OFFSET + 6]) << 48) |
+		    (static_cast<uint64_t> (p_ [OFF_NODE_OFFSET + 7]) << 56)) ;
+	}
+	self_t &	SetNodeOffset (uint64_t value) {
+	    p_ [OFF_NODE_OFFSET + 0] = static_cast<uint8_t> (value >>  0) ;
+	    p_ [OFF_NODE_OFFSET + 1] = static_cast<uint8_t> (value >>  8) ;
+	    p_ [OFF_NODE_OFFSET + 2] = static_cast<uint8_t> (value >> 16) ;
+	    p_ [OFF_NODE_OFFSET + 3] = static_cast<uint8_t> (value >> 24) ;
+	    p_ [OFF_NODE_OFFSET + 4] = static_cast<uint8_t> (value >> 32) ;
+	    p_ [OFF_NODE_OFFSET + 5] = static_cast<uint8_t> (value >> 40) ;
+	    p_ [OFF_NODE_OFFSET + 6] = static_cast<uint8_t> (value >> 48) ;
+	    p_ [OFF_NODE_OFFSET + 7] = static_cast<uint8_t> (value >> 56) ;
+	    return *this ;
+	}
+	uint_fast8_t	GetNodeDepth () const {
+	    return p_ [OFF_NODE_DEPTH] ;
+	}
+	self_t &	SetNodeDepth (uint8_t value) {
+	    p_ [OFF_NODE_DEPTH] = value ;
+	    return *this ;
+	}
+	const void *	GetSalt () const {
+	    return &p_ [OFF_SALT] ;
+	}
+	self_t &	SetSalt (const void *salt, size_t length) ;
+	const void *	GetPersonalization () const {
+	    return &p_ [OFF_PERSONALIZATION] ;
+	}
+	self_t &	SetPersonalization (const void *data, size_t length) ;
 
-    struct proxy8 {
-	parameter_t &	p_ ;
-	size_t		off_ ;
-	proxy8 (parameter_t &p, size_t off) : p_ (p), off_ (off) {
-	    /* NO-OP */
+	const parameter_block_t &	GetParameterBlock () const {
+	    return p_ ;
 	}
-	uint_fast8_t	GetValue () const {
-	    return GetUInt8 (p_, off_) ;
-	}
-	void	SetValue (uint8_t value) {
-	    SetUInt8 (p_, off_, value) ;
-	}
-	operator uint_fast8_t () const {
-	    return GetValue () ;
-	}
-	void	operator = (uint8_t value) {
-	    return SetValue (value) ;
+	void	CopyTo (parameter_block_t &param) const ;
+
+	operator const parameter_block_t & () const {
+	    return p_ ;
 	}
     } ;
-
-    inline const proxy8	DigestLength (const parameter_t &p) {
-	return proxy8 (const_cast<parameter_t &> (p), 0) ;
-    }
-    inline       proxy8	DigestLength (parameter_t &p) {
-	return proxy8 (p, 0) ;
-    }
-    inline const proxy8	KeyLength (const parameter_t &p) {
-	return proxy8 (const_cast<parameter_t &> (p), 1) ;
-    }
-    inline       proxy8	KeyLength (parameter_t &p) {
-	return proxy8 (p, 1) ;
-    }
-    inline const proxy8	Fanout (const parameter_t &p) {
-	return proxy8 (const_cast<parameter_t &> (p), 2) ;
-    }
-    inline       proxy8	Fanout (parameter_t &p) {
-	return proxy8 (p, 2) ;
-    }
-    inline const proxy8	Depth (const parameter_t &p) {
-	return proxy8 (const_cast<parameter_t &> (p), 3) ;
-    }
-    inline       proxy8	Depth (parameter_t &p) {
-	return proxy8 (p, 3) ;
-    }
-    inline const proxy8	NodeDepth (const parameter_t &p) {
-	return proxy8 (const_cast<parameter_t &> (p), 16) ;
-    }
-    inline       proxy8	NodeDepth (parameter_t &p) {
-	return proxy8 (p, 16) ;
-    }
-    inline const proxy8	InnerLength (const parameter_t &p) {
-	return proxy8 (const_cast<parameter_t &> (p), 17) ;
-    }
-    inline       proxy8	InnnerLength (parameter_t &p) {
-	return proxy8 (p, 17) ;
-    }
-
-    inline uint_fast32_t	GetLeafLength (const parameter_t &p) {
-	    return static_cast<uint_fast32_t> (p [0] >> 32) ;
-    }
-    inline void	SetLeafLength (parameter_t &p, uint32_t value) {
-	uint_fast64_t	mask = 0xFFFFFFFFu ;
-	p [0] = (p [0] & ~(mask << 32)) | (static_cast<uint_fast64_t> (value) << 32) ;
-    }
-    inline uint_fast64_t	GetNodeOffset (const parameter_t &p) {
-	return p [1] ;
-    }
-    inline void	SetNodeOffset (parameter_t &p, uint64_t value) {
-	p [1] = value ;
-    }
-
-    void	GetSalt (const parameter_t &p, void *buffer, size_t buffer_length) ;
-    void	SetSalt (parameter_t &p, const void *data, size_t length) ;
-    void	GetPersonalizationData (const parameter_t &p, void *buffer, size_t buffer_length) ;
-    void	SetPersonalizationData (parameter_t &p, const void *buffer, size_t buffer_length) ;
-    void	GetBytes (const parameter_t &p, void *buffer, size_t buffer_length) ;
-
     /**
      * 512bits digest value.
      */
@@ -184,8 +210,8 @@ namespace BLAKE2 {
 	 */
     public:
 	~Generator () ;
-	Generator (const parameter_t &param) ;
-	Generator (const parameter_t &param, const void *key, size_t key_len) ;
+	Generator (const parameter_block_t &param) ;
+	Generator (const parameter_block_t &param, const void *key, size_t key_len) ;
 	Generator &	Update (const void *data, size_t size) ;
 	Digest	Finalize () ;
     private:
@@ -197,7 +223,7 @@ namespace BLAKE2 {
 	}
     } ;
     void	InitializeChain (uint64_t *chain) ;
-    void	InitializeChain (uint64_t *chain, const parameter_t &param) ;
+    void	InitializeChain (uint64_t *chain, const parameter_block_t &param) ;
     void	Compress (uint64_t *chain, const void *message, uint64_t t0, uint64_t t1, uint64_t f0, uint64_t f1) ;
 
     /**
@@ -222,7 +248,7 @@ namespace BLAKE2 {
      *
      * @return Computed digest.
      */
-    Digest	Apply (const parameter_t &param, const void *key, size_t key_length, const void *data, size_t data_length) ;
+    Digest	Apply (const parameter_block_t &param, const void *key, size_t key_length, const void *data, size_t data_length) ;
 }	/* end of [namespace BLAKE2] */
 
 inline bool	operator == (const BLAKE2::Digest &a, const BLAKE2::Digest &b) {
