@@ -133,26 +133,16 @@ namespace BLAKE2 {
      * 512bits digest value.
      */
     class Digest {
-	friend class Generator ;
     public:
 	static const size_t	SIZE = 64 ;	// # of bytes in digest.
     private:
-	uint64_t	h_ [8] ;
+	uint8_t		h_ [SIZE] ;
     public:
         Digest () {
             ::memset (h_, 0, sizeof (h_)) ;
         }
 	Digest (uint64_t h0, uint64_t h1, uint64_t h2, uint64_t h3,
-		uint64_t h4, uint64_t h5, uint64_t h6, uint64_t h7) {
-	    h_ [0] = h0 ;
-	    h_ [1] = h1 ;
-	    h_ [2] = h2 ;
-	    h_ [3] = h3 ;
-	    h_ [4] = h4 ;
-	    h_ [5] = h5 ;
-	    h_ [6] = h6 ;
-	    h_ [7] = h7 ;
-	}
+		uint64_t h4, uint64_t h5, uint64_t h6, uint64_t h7) ;
         Digest (const Digest &src) {
             ::memcpy (h_, src.h_, sizeof (h_)) ;
         }
@@ -166,23 +156,21 @@ namespace BLAKE2 {
 	static bool	IsEqual (const Digest &a, const Digest &b) {
 	    return ::memcmp (a.h_, b.h_, sizeof (a.h_)) == 0 ;
 	}
-	void	GetBytes (void *buffer, size_t buffer_length) ;
+	void	CopyTo (void *buffer, size_t buffer_length) const ;
 
-	uint_fast8_t	GetByte (size_t offset) {
-	    size_t	off = offset / 8 ;
-	    size_t	rem = offset % 8 ;
-	    assert (off < 8) ;
-	    uint_fast64_t	v = h_ [off] ;
-	    return static_cast<uint8_t> (v >> (8 * rem)) ;
+	const uint8_t *	GetBytes () const {
+	    return h_ ;
 	}
-	uint_fast64_t	At (size_t idx) const {
-	    return h_ [idx] ;
+	uint_fast8_t	At (size_t offset) const {
+	    return h_ [offset] ;
 	}
-	uint_fast64_t	operator [] (size_t idx) const {
-	    return h_ [idx] ;
+	uint_fast8_t	operator [] (size_t offset) const {
+	    return h_ [offset] ;
 	}
+	uint_fast64_t	GetUInt64 (size_t idx) const ;
     } ;
 
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     class Generator {
     private:
 	enum {

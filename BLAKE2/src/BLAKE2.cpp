@@ -108,11 +108,25 @@ namespace BLAKE2 {
 		(static_cast<uint64_t> (p [7]) << 56)) ;
     }
 
+    static void	generic_store64 (void *start, uint64_t value) {
+	uint8_t *	p = static_cast<uint8_t *> (start) ;
+	p [0] = static_cast<uint8_t> (value >>  0) ;
+	p [1] = static_cast<uint8_t> (value >>  8) ;
+	p [2] = static_cast<uint8_t> (value >> 16) ;
+	p [3] = static_cast<uint8_t> (value >> 24) ;
+	p [4] = static_cast<uint8_t> (value >> 32) ;
+	p [5] = static_cast<uint8_t> (value >> 40) ;
+	p [6] = static_cast<uint8_t> (value >> 48) ;
+	p [7] = static_cast<uint8_t> (value >> 56) ;
+    }
+
 #if (defined (TARGET_IS_LITTLE_ENDIAN) && (TARGET_IS_LITTLE_ENDIAN != 0)) &&	\
     (defined (TARGET_ALLOWS_UNALIGNED_ACCESS) && (TARGET_ALLOWS_UNALIGNED_ACCESS != 0))
-#   define load64(X_)	(*((const uint64_t *)(X_)))
+#   define load64(X_)		(*((const uint64_t *)(X_)))
+#   define store64(X_, V_)	(*((uint64_t *)(X_)) = (V_))
 #else
-#   define load64(X_)	(generic_load64 (X_))
+#   define load64(X_)		(generic_load64 (X_))
+#   define store64(X_, V_)	(generic_store64 ((X_), (V_)))
 #endif
     /**
      * Rotate right by CNT bits
@@ -374,6 +388,26 @@ namespace BLAKE2 {
 	    Compress (H, buffer, t0, t1, ~0uLL, 0) ;
 	}
 	return Digest (H [0], H [1], H [2], H [3], H [4], H [5], H [6], H [7]) ;
+    }
+
+    Digest::Digest (uint64_t h0, uint64_t h1, uint64_t h2, uint64_t h3,
+		    uint64_t h4, uint64_t h5, uint64_t h6, uint64_t h7) {
+	store64 (&h_ [8 * 0], h0) ;
+	store64 (&h_ [8 * 1], h1) ;
+	store64 (&h_ [8 * 2], h2) ;
+	store64 (&h_ [8 * 3], h3) ;
+	store64 (&h_ [8 * 4], h4) ;
+	store64 (&h_ [8 * 5], h5) ;
+	store64 (&h_ [8 * 6], h6) ;
+	store64 (&h_ [8 * 7], h7) ;
+    }
+
+    void	Digest::CopyTo (void *buffer, size_t buffer_length) const {
+	::memcpy (buffer, h_, std::min (buffer_length, SIZE)) ;
+    }
+
+    uint_fast64_t	Digest::GetUInt64 (size_t idx) const {
+	return load64 (&h_ [8 * idx]) ;
     }
 }	/* end of [namespace BLAKE2] */
 /*

@@ -124,7 +124,7 @@ void	TestBLAKE2 () {
         BLAKE2::Digest	D (gen.Finalize ()) ;
 
         for (size_t j = 0 ; j < 64 ; ++j) {
-            assert (D.GetByte (j) == TestVector::BLAKE2 [i][j]) ;
+            assert (D [j] == TestVector::BLAKE2 [i][j]) ;
         }
 	if (false) {
 	    std::cerr << "Digest: " << put_hex (D [0], 16) ;
