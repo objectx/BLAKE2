@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <stdlib.h>
-#include <memory.h>
+#include <string.h>
 
 namespace BLAKE2 {
 
@@ -81,6 +81,7 @@ namespace BLAKE2 {
 	    p_ [OFF_LEAF_LENGTH + 1] = static_cast<uint8_t> (value >>  8) ;
 	    p_ [OFF_LEAF_LENGTH + 2] = static_cast<uint8_t> (value >> 16) ;
 	    p_ [OFF_LEAF_LENGTH + 3] = static_cast<uint8_t> (value >> 24) ;
+	    return *this ;
 	}
 	uint_fast64_t	GetNodeOffset () const {
 	    return ((static_cast<uint64_t> (p_ [OFF_NODE_OFFSET + 0]) <<  0) |
