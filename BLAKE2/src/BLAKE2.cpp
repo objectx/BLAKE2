@@ -306,7 +306,7 @@ namespace BLAKE2 {
     }
 
     Digest	Generator::Finalize () {
-	if (BLOCK_SIZE < used_) {
+	if (BLOCK_SIZE < static_cast<size_t> (used_)) {
 	    inc_counter (t0_, t1_, BLOCK_SIZE) ;
 	    Compress (h_, buffer_, t0_, t1_, 0, 0) ;
 	    used_ -= BLOCK_SIZE ;
