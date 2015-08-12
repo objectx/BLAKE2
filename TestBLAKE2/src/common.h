@@ -9,9 +9,10 @@
 #include <sys/types.h>
 #include <stdint.h>
 #include <assert.h>
-#define	WIN32_LEAN_AND_MEAN	1
-#include <windows.h>
-
+#if defined (_WIN32) || defined (_WIN64)
+#   define	WIN32_LEAN_AND_MEAN	1
+#   include <windows.h>
+#endif
 #include <iostream>
 #include <vector>
 #include <string>
