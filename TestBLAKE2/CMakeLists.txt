@@ -1,7 +1,8 @@
 
 cmake_minimum_required (VERSION 3.0)
 
-include_directories ("${CMAKE_SOURCE_DIR}/BLAKE2/include")
+include_directories ("${CMAKE_SOURCE_DIR}/BLAKE2/include"
+                     "${CMAKE_SOURCE_DIR}/Catch/include")
 
 add_executable (TestBLAKE2 src/main.cpp src/TestVector.cpp)
 target_link_libraries (TestBLAKE2 BLAKE2)
