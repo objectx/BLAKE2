@@ -10,3 +10,5 @@ target_link_libraries (TestBLAKE2 BLAKE2)
 add_test (NAME TestBLAKE2
           COMMAND TestBLAKE2)
 target_compile_features (TestBLAKE2 PRIVATE cxx_auto_type)
+set_target_properties (TestBLAKE2 PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "src/common.h")
+cotire (TestBLAKE2)
