@@ -53,19 +53,6 @@ static const uint64_t   IV7 = 0x5be0cd19137e2179ULL ;
 
 namespace BLAKE2 {
 
-    const size_t Parameter::OFF_DIGEST_LENGTH ;
-    const size_t Parameter::OFF_KEY_LENGTH ;
-    const size_t Parameter::OFF_FANOUT_COUNT ;
-    const size_t Parameter::OFF_DEPTH ;
-    const size_t Parameter::OFF_LEAF_LENGTH ;
-    const size_t Parameter::OFF_NODE_OFFSET ;
-    const size_t Parameter::OFF_NODE_DEPTH ;
-    const size_t Parameter::OFF_INNER_LENGTH ;
-    const size_t Parameter::OFF_SALT ;
-    const size_t Parameter::OFF_PERSONALIZATION ;
-    const size_t Parameter::MAX_SALT_LENGTH ;
-    const size_t Parameter::MAX_PERSONALIZATION_LENGTH ;
-
     Parameter::Parameter () {
         memset (&p_ [0], 0, sizeof (parameter_block_t)) ;
         SetDigestLength (64).SetFanoutCount (1).SetDepth (1) ;
@@ -332,7 +319,7 @@ namespace BLAKE2 {
         return *this ;
     }
 
-    const size_t Digest::SIZE ;
+    //const size_t Digest::SIZE ;
 
     Digest      Generator::Finalize () {
         if (BLOCK_SIZE < static_cast<size_t> (used_)) {
@@ -418,7 +405,7 @@ namespace BLAKE2 {
     }
 
     void        Digest::CopyTo (void *buffer, size_t buffer_length) const {
-        ::memcpy (buffer, h_, std::min (buffer_length, SIZE)) ;
+        ::memcpy (buffer, h_, std::min (buffer_length, sizeof (h_))) ;
     }
 
     uint_fast64_t       Digest::GetUInt64 (size_t idx) const {

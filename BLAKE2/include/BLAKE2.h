@@ -20,21 +20,22 @@ namespace BLAKE2 {
 
     typedef uint8_t     parameter_block_t [64] ;
 
+    const size_t OFF_DIGEST_LENGTH   =  0
+               , OFF_KEY_LENGTH      =  1
+               , OFF_FANOUT_COUNT    =  2
+               , OFF_DEPTH           =  3
+               , OFF_LEAF_LENGTH     =  4
+               , OFF_NODE_OFFSET     =  8
+               , OFF_NODE_DEPTH      = 16
+               , OFF_INNER_LENGTH    = 17
+               , OFF_SALT            = 32
+               , OFF_PERSONALIZATION = 48 ;
+    const size_t MAX_SALT_LENGTH = 16 ;
+    const size_t MAX_PERSONALIZATION_LENGTH = 16 ;
+
     class Parameter {
     public:
         typedef Parameter       self_t ;
-        static const size_t OFF_DIGEST_LENGTH   =  0
-                          , OFF_KEY_LENGTH      =  1
-                          , OFF_FANOUT_COUNT    =  2
-                          , OFF_DEPTH           =  3
-                          , OFF_LEAF_LENGTH     =  4
-                          , OFF_NODE_OFFSET     =  8
-                          , OFF_NODE_DEPTH      = 16
-                          , OFF_INNER_LENGTH    = 17
-                          , OFF_SALT            = 32
-                          , OFF_PERSONALIZATION = 48 ;
-        static const size_t MAX_SALT_LENGTH = 16 ;
-        static const size_t MAX_PERSONALIZATION_LENGTH = 16 ;
     private:
         parameter_block_t       p_ ;
     public:
@@ -134,7 +135,7 @@ namespace BLAKE2 {
      */
     class Digest {
     public:
-        static const size_t SIZE = 64 ;     // # of bytes in digest.
+        static constexpr size_t SIZE = 64 ;     // # of bytes in digest.
     private:
         uint8_t         h_ [SIZE] ;
     public:
