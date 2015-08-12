@@ -17,6 +17,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <catch.hpp>
 
 #endif	/* common_h__09968374417d10df5bc39ea172cdd642 */
 /*
