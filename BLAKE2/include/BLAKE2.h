@@ -6,11 +6,11 @@
 #ifndef blake2_h__4a9213114a5fd6c034b25abd47c90326
 #define blake2_h__4a9213114a5fd6c034b25abd47c90326
 
-#include <sys/types.h>
-#include <stdint.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstddef>
+#include <cstdint>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
 
 namespace BLAKE2 {
 
