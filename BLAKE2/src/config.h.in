@@ -2,3 +2,5 @@
 
 #cmakedefine01  TARGET_IS_LITTLE_ENDIAN
 #cmakedefine01  TARGET_ALLOWS_UNALIGNED_ACCESS
+#cmakedefine01  TARGET_HAVE_AVX
+
