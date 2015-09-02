@@ -6,11 +6,13 @@
 #ifndef blake2_h__4a9213114a5fd6c034b25abd47c90326
 #define blake2_h__4a9213114a5fd6c034b25abd47c90326
 
-#include <sys/types.h>
-#include <stdint.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstddef>
+#include <cstdint>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <array>
+#include <memory>
 
 namespace BLAKE2 {
 
@@ -185,7 +187,7 @@ namespace BLAKE2 {
         uint64_t        t1_ ;
         int32_t         used_ ;
         uint32_t        flags_ ;
-        uint8_t *       buffer_ ;
+        std::unique_ptr<std::array<uint8_t, BUFFER_SIZE> >  buffer_ ;
         /*
          * buffer_ --> +----------------+
          *             |                |
