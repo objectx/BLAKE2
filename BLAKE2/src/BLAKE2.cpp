@@ -12,12 +12,8 @@
 #   include "config.h"
 #endif
 
-#if ! defined (TARGET_IS_LITTLE_ENDIAN)
-#   define TARGET_IS_LITTLE_ENDIAN              0
-#endif
-
-#if ! defined (TARGET_ALLOWS_UNALIGNED_ACCESS)
-#   define TARGET_ALLOWS_UNALIGNED_ACCESS       0
+#ifdef TARGET_HAVE_AVX
+#   include <immintrin.h>
 #endif
 
 static const size_t     SALT_LENGTH = 16 ;
@@ -124,8 +120,7 @@ namespace BLAKE2 {
         p [7] = static_cast<uint8_t> (value >> 56) ;
     }
 
-#if (defined (TARGET_IS_LITTLE_ENDIAN) && (TARGET_IS_LITTLE_ENDIAN != 0)) &&    \
-    (defined (TARGET_ALLOWS_UNALIGNED_ACCESS) && (TARGET_ALLOWS_UNALIGNED_ACCESS != 0))
+#if defined (TARGET_IS_LITTLE_ENDIAN) && defined (TARGET_ALLOWS_UNALIGNED_ACCESS)
 #   define load64(X_)           (*((const uint64_t *)(X_)))
 #   define store64(X_, V_)      (*((uint64_t *)(X_)) = (V_))
 #else
