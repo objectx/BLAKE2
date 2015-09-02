@@ -1,0 +1,4 @@
+#pragma once
+
+#cmakedefine01  TARGET_IS_LITTLE_ENDIAN
+#cmakedefine01  TARGET_ALLOWS_UNALIGNED_ACCESS

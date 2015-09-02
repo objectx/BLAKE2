@@ -8,9 +8,8 @@
 #include <type_traits>
 #include <BLAKE2.h>
 
-#if defined (_M_AMD64) || defined (_M_IX86)
-#   define TARGET_IS_LITTLE_ENDIAN              1
-#   define TARGET_ALLOWS_UNALIGNED_ACCESS       1
+#ifdef HAVE_CONFIG_H
+#   include "config.h"
 #endif
 
 #if ! defined (TARGET_IS_LITTLE_ENDIAN)
@@ -55,28 +54,32 @@ static const uint64_t   IV7 = 0x5be0cd19137e2179ULL ;
 namespace BLAKE2 {
 
     Parameter::Parameter () {
-        memset (&p_ [0], 0, sizeof (parameter_block_t)) ;
+        p_.fill (0) ;
         SetDigestLength (64).SetFanoutCount (1).SetDepth (1) ;
     }
 
     Parameter::Parameter (const parameter_block_t &param) {
-        memcpy (&p_ [0], &param [0], sizeof (parameter_block_t)) ;
+        p_ = param ;
     }
 
     Parameter & Parameter::SetSalt (const void *salt, size_t length) {
-        memset (&p_ [OFF_SALT], 0, MAX_SALT_LENGTH) ;
-        memcpy (&p_ [OFF_SALT], salt, std::min (length, MAX_SALT_LENGTH)) ;
+        auto salt_len = std::min<const size_t> (length, MAX_SALT_LENGTH) ;
+        auto p = static_cast<uint8_t *> (&p_ [OFF_SALT]) ;
+        memcpy (p, salt, salt_len) ;
+        memset (p + salt_len, 0, MAX_SALT_LENGTH - salt_len) ;
         return *this ;
     }
 
     Parameter & Parameter::SetPersonalization (const void *data, size_t length) {
-        memset (&p_ [OFF_PERSONALIZATION], 0, MAX_PERSONALIZATION_LENGTH) ;
-        memcpy (&p_ [OFF_PERSONALIZATION], data, std::min (length, MAX_PERSONALIZATION_LENGTH)) ;
+        auto len = std::min<const size_t> (length, MAX_PERSONALIZATION_LENGTH) ;
+        auto p = static_cast<uint8_t *> (&p_ [OFF_PERSONALIZATION]) ;
+        memcpy (p, data, len) ;
+        memset (p + len, 0, MAX_PERSONALIZATION_LENGTH - len) ;
         return *this ;
     }
 
     void        Parameter::CopyTo (parameter_block_t &param) const {
-        memcpy (&param [0], &p_ [0], sizeof (parameter_block_t)) ;
+        param = p_ ;
     }
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -407,7 +410,7 @@ namespace BLAKE2 {
     }
 
     void        Digest::CopyTo (void *buffer, size_t buffer_length) const {
-        ::memcpy (buffer, h_, std::min (buffer_length, sizeof (h_))) ;
+        ::memcpy (buffer, &h_ [0], std::min (buffer_length, sizeof (h_))) ;
     }
 
     uint_fast64_t       Digest::GetUInt64 (size_t idx) const {
