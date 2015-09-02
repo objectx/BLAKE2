@@ -5,6 +5,7 @@
  */
 #include <algorithm>
 #include <new>
+#include <type_traits>
 #include <BLAKE2.h>
 
 #if defined (_M_AMD64) || defined (_M_IX86)
@@ -256,16 +257,15 @@ namespace BLAKE2 {
     }
 
     Generator::~Generator () {
-        free (buffer_) ;
+        /* NO-OP */
     }
 
     Generator::Generator (const parameter_block_t &param)
         : t0_ (0)
         , t1_ (0)
         , used_ (0)
-        , flags_ (0)
-        , buffer_ (0) {
-        buffer_ = static_cast<uint8_t *> (malloc (BUFFER_SIZE)) ;
+        , flags_ (0) {
+        buffer_ = std::make_unique<std::remove_reference<decltype (*buffer_)>::type> () ;
         InitializeChain (h_, param) ;
     }
 
@@ -273,44 +273,45 @@ namespace BLAKE2 {
         : t0_ (0)
         , t1_ (0)
         , used_ (0)
-        , flags_ (0)
-        , buffer_ (0) {
-        buffer_ = static_cast<uint8_t *> (malloc (BUFFER_SIZE)) ;
+        , flags_ (0) {
+        buffer_ = std::make_unique<std::remove_reference<decltype (*buffer_)>::type> () ;
 
         if (key == 0 || key_len == 0) {
             InitializeChain (h_, param) ;
         }
         else {
-            Parameter * P = new (buffer_) Parameter (param) ;
+            Parameter * P = new (buffer_.get ()) Parameter (param) ;
             uint8_t     k_len = static_cast<uint8_t> (std::min (key_len, MAX_KEY_LENGTH)) ;
 
             P->SetKeyLength (k_len) ;
 
             InitializeChain (h_, P->GetParameterBlock ()) ;
 
-            memset (buffer_, 0, BLOCK_SIZE) ;
-            memcpy (buffer_, key, k_len) ;
+            auto &  buf = *buffer_ ;
+            buf.fill (0) ;
+            memcpy (&buf [0], key, k_len) ;
             used_ = BLOCK_SIZE ;
         }
     }
 
     Generator & Generator::Update (const void *data, size_t size) {
         if (0 < size) {
+            auto &  buf = *buffer_ ;
             const uint8_t *     src = static_cast<const uint8_t *> (data) ;
 
             while (true) {
                 size_t  remain = BUFFER_SIZE - used_ ;
 
                 if (size <= remain) {
-                    memcpy (buffer_ + used_, src, size) ;
+                    memcpy (&buf [used_], src, size) ;
                     used_ += static_cast<int32_t> (size) ;
                     break ;
                 }
                 // 0 < (size - remain)
-                memcpy (buffer_ + used_, src, remain) ;
+                memcpy (&buf [used_], src, remain) ;
                 inc_counter (t0_, t1_, BLOCK_SIZE) ;
-                Compress (h_, buffer_, t0_, t1_, 0, 0) ;
-                memcpy (buffer_, buffer_ + BLOCK_SIZE, BLOCK_SIZE) ;
+                Compress (h_, &buf [0], t0_, t1_, 0, 0) ;
+                memcpy (&buf [0], &buf [BLOCK_SIZE], BLOCK_SIZE) ;
                 used_ = BLOCK_SIZE ;
                 src += remain ;
                 size -= remain ;
@@ -322,15 +323,16 @@ namespace BLAKE2 {
     //const size_t Digest::SIZE ;
 
     Digest      Generator::Finalize () {
+        auto &  buf = *buffer_ ;
         if (BLOCK_SIZE < static_cast<size_t> (used_)) {
             inc_counter (t0_, t1_, BLOCK_SIZE) ;
-            Compress (h_, buffer_, t0_, t1_, 0, 0) ;
+            Compress (h_, &buf [0], t0_, t1_, 0, 0) ;
             used_ -= BLOCK_SIZE ;
-            memcpy (buffer_, buffer_ + BLOCK_SIZE, used_) ;
+            memcpy (&buf [0], &buf [BLOCK_SIZE], used_) ;
         }
         inc_counter (t0_, t1_, used_) ;
-        memset (buffer_ + used_, 0, BUFFER_SIZE - used_) ;      // 0 padding.
-        Compress (h_, buffer_, t0_, t1_, ~0uLL, 0) ;
+        memset (&buf [used_], 0, BUFFER_SIZE - used_) ;      // 0 padding.
+        Compress (h_, &buf [0], t0_, t1_, ~0uLL, 0) ;
         flags_ |= (1u << BIT_FINALIZED) ;
         return Digest (h_ [0], h_ [1], h_ [2], h_ [3], h_ [4], h_ [5], h_ [6], h_ [7]) ;
     }

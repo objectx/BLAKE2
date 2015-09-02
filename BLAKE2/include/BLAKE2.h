@@ -11,6 +11,8 @@
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
+#include <array>
+#include <memory>
 
 namespace BLAKE2 {
 
@@ -185,7 +187,7 @@ namespace BLAKE2 {
         uint64_t        t1_ ;
         int32_t         used_ ;
         uint32_t        flags_ ;
-        uint8_t *       buffer_ ;
+        std::unique_ptr<std::array<uint8_t, BUFFER_SIZE> >  buffer_ ;
         /*
          * buffer_ --> +----------------+
          *             |                |
