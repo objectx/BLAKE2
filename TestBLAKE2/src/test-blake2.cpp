@@ -58,6 +58,24 @@ TEST_CASE ("Test Parameter", "[Parameter]") {
                                          "eeeeeeee eeeeeeee eeeeeeee eeeeeeee\n" } ;
         REQUIRE (result.compare (expected) == 0) ;
     }
+    SECTION ("Initialize parameter with shorter salt/personalization") {
+        uint8_t salt [8] ;
+        uint8_t personal [8] ;
+        BLAKE2::Parameter       P ;
+        P.SetKeyLength (256 / 8) ;
+
+        memset (salt    , 0x55, sizeof (salt)) ;
+        memset (personal, 0xee, sizeof (personal)) ;
+
+        P.SetSalt (salt, sizeof (salt)) ;
+        P.SetPersonalization (personal, sizeof (personal)) ;
+        auto    result = dump_parameter (P) ;
+        auto    expected = std::string { "40200101 00000000 00000000 00000000 "
+                                         "00000000 00000000 00000000 00000000 "
+                                         "55555555 55555555 00000000 00000000 "
+                                         "eeeeeeee eeeeeeee 00000000 00000000\n" } ;
+        REQUIRE (result.compare (expected) == 0) ;
+    }
 }
 
 TEST_CASE ("Test Compression", "[Compress]") {
