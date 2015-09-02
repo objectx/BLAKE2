@@ -20,7 +20,7 @@ namespace BLAKE2 {
 
     class Digest ;
 
-    typedef uint8_t     parameter_block_t [64] ;
+    using parameter_block_t = std::array<uint8_t, 64> ;
 
     const size_t OFF_DIGEST_LENGTH   =  0
                , OFF_KEY_LENGTH      =  1
@@ -139,30 +139,30 @@ namespace BLAKE2 {
     public:
         static constexpr size_t SIZE = 64 ;     // # of bytes in digest.
     private:
-        uint8_t         h_ [SIZE] ;
+        std::array<uint8_t, SIZE>   h_ ;
     public:
         Digest () {
-            ::memset (h_, 0, sizeof (h_)) ;
+            h_.fill (0) ;
         }
         Digest (uint64_t h0, uint64_t h1, uint64_t h2, uint64_t h3,
                 uint64_t h4, uint64_t h5, uint64_t h6, uint64_t h7) ;
         Digest (const Digest &src) {
-            ::memcpy (h_, src.h_, sizeof (h_)) ;
+            h_ = src.h_ ;
         }
         Digest &        Assign (const Digest &src) {
-            ::memcpy (h_, src.h_, sizeof (h_)) ;
+            h_ = src.h_ ;
             return *this ;
         }
         Digest &        operator = (const Digest &src) {
             return Assign (src) ;
         }
         static bool     IsEqual (const Digest &a, const Digest &b) {
-            return ::memcmp (a.h_, b.h_, sizeof (a.h_)) == 0 ;
+            return a.h_ == b.h_ ;
         }
         void    CopyTo (void *buffer, size_t buffer_length) const ;
 
         const uint8_t * GetBytes () const {
-            return h_ ;
+            return &h_ [0] ;
         }
         uint_fast8_t    At (size_t offset) const {
             return h_ [offset] ;
