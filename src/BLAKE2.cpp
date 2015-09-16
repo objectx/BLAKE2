@@ -1,7 +1,7 @@
 /*
  * BLAKE2.cpp:
  *
- * Author(s): objectx
+ * Copyright (c) 2015 Masashi Fujita
  */
 #include <algorithm>
 #include <new>

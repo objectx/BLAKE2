@@ -1,7 +1,7 @@
 /*
  * BLAKE2.hpp: The BLAKE2 Hash function.
  *
- * Author(s): objectx
+ * Copyright (c) 2015 Masashi Fujita
  */
 #ifndef blake2_hpp__4a9213114a5fd6c034b25abd47c90326
 #define blake2_hpp__4a9213114a5fd6c034b25abd47c90326
