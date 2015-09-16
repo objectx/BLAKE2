@@ -43,3 +43,10 @@ add_library (${TARGET_NAME} ${SOURCE_FILES} ${PUBLIC_HEADERS})
     target_include_directories (${TARGET_NAME} PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
     target_compile_features (BLAKE2 PRIVATE cxx_nonstatic_member_init cxx_constexpr cxx_generic_lambdas)
+
+install (TARGETS ${TARGET_NAME}
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
+
+install (DIRECTORY ${PROJECT_SOURCE_DIR}/include/ DESTINATION include FILES_MATCHING PATTERN "*.hpp")
