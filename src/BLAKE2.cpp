@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <new>
 #include <type_traits>
-#include <BLAKE2.h>
+#include "BLAKE2.hpp"
 
 #ifdef HAVE_CONFIG_H
 #   include "config.h"

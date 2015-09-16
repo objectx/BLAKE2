@@ -11,7 +11,7 @@ if (${HAVE_AVX})
     add_compile_options ("-mavx")
 endif ()
 
-if (NOT CMAKE_CROSSCOMPILING)
+if (NOT DEFINED CMAKE_CROSSCOMPILING)
     # Self hosted
     TEST_BIG_ENDIAN (IS_BIG_ENDIAN)
     if (NOT IS_BIG_ENDIAN)
@@ -35,7 +35,11 @@ add_definitions ("-DHAVE_CONFIG_H")
 
 include_directories (${CMAKE_CURRENT_BINARY_DIR})
 
-add_library (BLAKE2 BLAKE2.cpp)
-target_include_directories (BLAKE2 PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
-target_compile_features (BLAKE2 PRIVATE cxx_nonstatic_member_init cxx_constexpr cxx_generic_lambdas)
+set (SOURCE_FILES BLAKE2.cpp)
+set (PUBLIC_HEADERS ${PROJECT_SOURCE_DIR}/include/BLAKE2.hpp)
+
+set (TARGET_NAME BLAKE2)
+add_library (${TARGET_NAME} ${SOURCE_FILES} ${PUBLIC_HEADERS})
+    target_include_directories (${TARGET_NAME} PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
+    target_compile_features (BLAKE2 PRIVATE cxx_nonstatic_member_init cxx_constexpr cxx_generic_lambdas)

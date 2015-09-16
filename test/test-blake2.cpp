@@ -6,7 +6,7 @@
 #include "common.h"
 #include "manips.h"
 #include "TestVector.h"
-#include <BLAKE2.h>
+#include "BLAKE2.hpp"
 
 static std::ostream &   operator << (std::ostream &out, const BLAKE2::parameter_block_t &p) {
 #define P_(OFF_)        put_hex (p [OFF_], 2)

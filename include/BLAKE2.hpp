@@ -1,10 +1,10 @@
 /*
- * BLAKE2.h: The BLAKE2 Hash function.
+ * BLAKE2.hpp: The BLAKE2 Hash function.
  *
  * Author(s): objectx
  */
-#ifndef blake2_h__4a9213114a5fd6c034b25abd47c90326
-#define blake2_h__4a9213114a5fd6c034b25abd47c90326
+#ifndef blake2_hpp__4a9213114a5fd6c034b25abd47c90326
+#define blake2_hpp__4a9213114a5fd6c034b25abd47c90326
 
 #include <cstddef>
 #include <cstdint>
@@ -247,7 +247,7 @@ inline bool     operator == (const BLAKE2::Digest &a, const BLAKE2::Digest &b) {
     return BLAKE2::Digest::IsEqual (a, b) ;
 }
 
-#endif  /* blake2_h__4a9213114a5fd6c034b25abd47c90326 */
+#endif  /* blake2_hpp__4a9213114a5fd6c034b25abd47c90326 */
 /*
  * [END OF FILE]
  */
