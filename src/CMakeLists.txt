@@ -30,12 +30,12 @@ int main () {
         ]=] TARGET_ALLOWS_UNALIGNED_ACCESS)
 endif ()
 
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 add_definitions ("-DHAVE_CONFIG_H")
 
 include_directories (${CMAKE_CURRENT_BINARY_DIR})
 
-add_library (BLAKE2 src/BLAKE2.cpp)
+add_library (BLAKE2 BLAKE2.cpp)
 target_include_directories (BLAKE2 PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
 target_compile_features (BLAKE2 PRIVATE cxx_nonstatic_member_init cxx_constexpr cxx_generic_lambdas)
