@@ -20,6 +20,26 @@ static const size_t     SALT_LENGTH = 16 ;
 static const size_t     PERSONALIZATION_INFO_LENGTH = 16 ;
 static const size_t     MAX_KEY_LENGTH = 64 ;
 
+#ifdef TARGET_HAVE_AVX2
+static constexpr __m128i    to__m128i (int v0, int v1, int v2, int v3) {
+    return (__m128i)(__v4si){ v0, v1, v2, v3 } ;
+}
+
+static const __m128i    sigma [12][4] = {
+    { to__m128i ( 0,  2,  4,  6), to__m128i ( 1,  3,  5,  7), to__m128i ( 8, 10, 12, 14), to__m128i ( 9, 11, 13, 15) },
+    { to__m128i (14,  4,  9, 13), to__m128i (10,  8, 15,  6), to__m128i ( 1,  0, 11,  5), to__m128i (12,  2,  7,  3) },
+    { to__m128i (11, 12,  5, 15), to__m128i ( 8,  0,  2, 13), to__m128i (10,  3,  7,  9), to__m128i (14,  6,  1,  4) },
+    { to__m128i ( 7,  3, 13, 11), to__m128i ( 9,  1, 12, 14), to__m128i ( 2,  5,  4, 15), to__m128i ( 6, 10,  0,  8) },
+    { to__m128i ( 9,  5,  2, 10), to__m128i ( 0,  7,  4, 15), to__m128i (14, 11,  6,  3), to__m128i ( 1, 12,  8, 13) },
+    { to__m128i ( 2,  6,  0,  8), to__m128i (12, 10, 11,  3), to__m128i ( 4,  7, 15,  1), to__m128i (13,  5, 14,  9) },
+    { to__m128i (12,  1, 14,  4), to__m128i ( 5, 15, 13, 10), to__m128i ( 0,  6,  9,  8), to__m128i ( 7,  3,  2, 11) },
+    { to__m128i (13,  7, 12,  3), to__m128i (11, 14,  1,  9), to__m128i ( 5, 15,  8,  2), to__m128i ( 0,  4,  6, 10) },
+    { to__m128i ( 6, 14, 11,  0), to__m128i (15,  9,  3,  8), to__m128i (12, 13,  1, 10), to__m128i ( 2,  7,  4,  5) },
+    { to__m128i (10,  8,  7,  1), to__m128i ( 2,  4,  6,  5), to__m128i (15,  9,  3, 13), to__m128i (11, 14, 12,  0) },
+    { to__m128i ( 0,  2,  4,  6), to__m128i ( 1,  3,  5,  7), to__m128i ( 8, 10, 12, 14), to__m128i ( 9, 11, 13, 15) },
+    { to__m128i (14,  4,  9, 13), to__m128i (10,  8, 15,  6), to__m128i ( 1,  0, 11,  5), to__m128i (12,  2,  7,  3) }
+} ;
+#else
 static const uint8_t    sigma [12][16] = {
     {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 } ,
     { 14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3 } ,
@@ -35,6 +55,7 @@ static const uint8_t    sigma [12][16] = {
     {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 } ,        // Same as sigma [0]
     { 14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3 }
 } ;
+#endif
 
 static const uint64_t   IV0 = 0x6a09e667f3bcc908ULL ;
 static const uint64_t   IV1 = 0xbb67ae8584caa73bULL ;
@@ -143,7 +164,139 @@ namespace BLAKE2 {
 #endif
     }
 
+#ifdef TARGET_HAVE_AVX2
+    static constexpr int maskgen (int v0, int v1, int v2, int v3) {
+        return (  ((v0 & 3) << 0)
+                  | ((v1 & 3) << 2)
+                  | ((v2 & 3) << 4)
+                  | ((v3 & 3) << 6) ) ;
+    }
 
+    __m256i rotr32 (__m256i x) {
+        return _mm256_shuffle_epi32 (x, maskgen (1, 0, 3, 2)) ;
+    }
+
+    __m256i rotr24 (__m256i x) {
+        return _mm256_or_si256 (_mm256_srli_epi64 (x, 24), _mm256_slli_epi64 (x, 64 - 24)) ;
+    }
+
+    __m256i rotr16 (__m256i x) {
+        return _mm256_or_si256 (_mm256_srli_epi64 (x, 16), _mm256_slli_epi64 (x, 64 - 16)) ;
+    }
+
+    __m256i rotr63 (__m256i x) {
+        return _mm256_or_si256 (_mm256_srli_epi64 (x, 63), _mm256_slli_epi64 (x, 64 - 63)) ;
+    }
+
+    __m256i ror256x64 (__m256i x, int count) {
+        switch (count & 3) {
+        case 3: return _mm256_permute4x64_epi64 (x, maskgen (3, 0, 1, 2)) ;
+        case 2: return _mm256_permute4x64_epi64 (x, maskgen (2, 3, 0, 1)) ;
+        case 1: return _mm256_permute4x64_epi64 (x, maskgen (1, 2, 3, 0)) ;
+        case 0: return x ;
+        default:
+            break ;
+        }
+        assert (false) ;
+        return x ;
+    }
+
+    __m256i rol256x64 (__m256i x, int count) {
+        switch (count & 3) {
+        case 3: return _mm256_permute4x64_epi64 (x, maskgen (1, 2, 3, 0)) ;
+        case 2: return _mm256_permute4x64_epi64 (x, maskgen (2, 3, 0, 1)) ;
+        case 1: return _mm256_permute4x64_epi64 (x, maskgen (3, 0, 1, 2)) ;
+        case 0: return x ;
+        default:
+            break ;
+        }
+        assert (false) ;
+        return x ;
+    }
+
+    void Compress (uint64_t *chain, const void *message, uint64_t t0, uint64_t t1, uint64_t f0, uint64_t f1) {
+        const uint8_t * msg = static_cast<const uint8_t *> (message) ;
+
+        uint64_t        m [16] ;
+        m [ 0] = load64 (msg + 8 *  0) ;
+        m [ 1] = load64 (msg + 8 *  1) ;
+        m [ 2] = load64 (msg + 8 *  2) ;
+        m [ 3] = load64 (msg + 8 *  3) ;
+        m [ 4] = load64 (msg + 8 *  4) ;
+        m [ 5] = load64 (msg + 8 *  5) ;
+        m [ 6] = load64 (msg + 8 *  6) ;
+        m [ 7] = load64 (msg + 8 *  7) ;
+        m [ 8] = load64 (msg + 8 *  8) ;
+        m [ 9] = load64 (msg + 8 *  9) ;
+        m [10] = load64 (msg + 8 * 10) ;
+        m [11] = load64 (msg + 8 * 11) ;
+        m [12] = load64 (msg + 8 * 12) ;
+        m [13] = load64 (msg + 8 * 13) ;
+        m [14] = load64 (msg + 8 * 14) ;
+        m [15] = load64 (msg + 8 * 15) ;
+
+        //r256    o0 { &chain [0] } ;
+        __m256i o0 = _mm256_loadu_si256 ((const __m256i *)(&chain [0])) ;
+        // r256    o1 { &chain [4] } ;
+        __m256i o1 = _mm256_loadu_si256 ((const __m256i *)(&chain [4])) ;
+
+        __m256i r0 = o0 ;
+        __m256i r1 = o1 ;
+
+        __m256i r2 = _mm256_setr_epi64x (IV0, IV1, IV2, IV3) ;
+        __m256i r3 = _mm256_xor_si256 (_mm256_setr_epi64x (IV4, IV5, IV6, IV7), _mm256_setr_epi64x (t0, t1, f0, f1)) ;
+
+        auto round = [&m, &r0, &r1, &r2, &r3](int r) {
+            r0 = _mm256_add_epi64 (r0, _mm256_add_epi64 (r1, _mm256_i32gather_epi64 ((const int64_t *)m, sigma [r][0], 8))) ;
+            r3 = rotr32 (_mm256_xor_si256 (r3, r0)) ;
+            r2 = _mm256_add_epi64 (r2, r3) ;
+            r1 = rotr24 (_mm256_xor_si256 (r1, r2)) ;
+            r0 = _mm256_add_epi64 (r0, _mm256_add_epi64 (r1, _mm256_i32gather_epi64 ((const int64_t *)m, sigma [r][1], 8))) ;
+            r3 = rotr16 (_mm256_xor_si256 (r3, r0)) ;
+            r2 = _mm256_add_epi64 (r2, r3) ;
+            r1 = rotr63 (_mm256_xor_si256 (r1, r2)) ;
+            r1 = ror256x64 (r1, 1) ;
+            r2 = ror256x64 (r2, 2) ;
+            r3 = ror256x64 (r3, 3) ;
+            r0 = _mm256_add_epi64 (r0, _mm256_add_epi64 (r1, _mm256_i32gather_epi64 ((const int64_t *)m, sigma [r][2], 8))) ;
+            r3 = rotr32 (_mm256_xor_si256 (r3, r0)) ;
+            r2 = _mm256_add_epi64 (r2, r3) ;
+            r1 = rotr24 (_mm256_xor_si256 (r1, r2)) ;
+            r0 = _mm256_add_epi64 (r0, _mm256_add_epi64 (r1, _mm256_i32gather_epi64 ((const int64_t *)m, sigma [r][3], 8))) ;
+            r3 = rotr16 (_mm256_xor_si256 (r3, r0)) ;
+            r2 = _mm256_add_epi64 (r2, r3) ;
+            r1 = rotr63 (_mm256_xor_si256 (r1, r2)) ;
+            r1 = rol256x64 (r1, 1) ;
+            r2 = rol256x64 (r2, 2) ;
+            r3 = rol256x64 (r3, 3) ;
+        } ;
+
+        if (false) {
+            // Manual unroll cause bad code (writing temporal values onto stack!)
+            round ( 0) ;
+            round ( 1) ;
+            round ( 2) ;
+            round ( 3) ;
+            round ( 4) ;
+            round ( 5) ;
+            round ( 6) ;
+            round ( 7) ;
+            round ( 8) ;
+            round ( 9) ;
+            round (10) ;
+            round (11) ;
+        }
+        else {
+
+            for (int_fast32_t i = 0 ; i < 12 ; i += 1) {
+                round (i) ;
+            }
+        }
+
+        _mm256_storeu_si256 ((__m256i *)(&chain [0]), _mm256_xor_si256 (o0, _mm256_xor_si256 (r0, r2))) ;
+        _mm256_storeu_si256 ((__m256i *)(&chain [4]), _mm256_xor_si256 (o1, _mm256_xor_si256 (r1, r3))) ;
+    }
+#else
     void        Compress (uint64_t *chain, const void *message, uint64_t t0, uint64_t t1, uint64_t f0, uint64_t f1) {
         const uint8_t * msg = static_cast<const uint8_t *> (message) ;
 
@@ -229,7 +382,7 @@ namespace BLAKE2 {
         chain [6] ^= v06 ^ v14 ;
         chain [7] ^= v07 ^ v15 ;
     }
-
+#endif  /* not TARGET_HAVE_AVX */
 
     void        InitializeChain (uint64_t *chain) {
         chain [0] = IV0 ;

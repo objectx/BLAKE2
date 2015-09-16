@@ -6,8 +6,11 @@ include (CheckCXXSourceRuns)
 include (CheckCXXCompilerFlag)
 
 check_cxx_compiler_flag ("-mavx" TARGET_HAVE_AVX)
+check_cxx_compiler_flag ("-mavx2" TARGET_HAVE_AVX2)
 
-if (${HAVE_AVX})
+if (${TARGET_HAVE_AVX2})
+    add_compile_options ("-mavx2")
+elseif (${HAVE_AVX})
     add_compile_options ("-mavx")
 endif ()
 

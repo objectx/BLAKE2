@@ -9,6 +9,7 @@
 #cmakedefine01  TARGET_IS_LITTLE_ENDIAN
 #cmakedefine01  TARGET_ALLOWS_UNALIGNED_ACCESS
 #cmakedefine01  TARGET_HAVE_AVX
+#cmakedefine01  TARGET_HAVE_AVX2
 
 #endif  /* config_h__6BC983E11FF04F7DB957570824A11FC9 */
 /*
