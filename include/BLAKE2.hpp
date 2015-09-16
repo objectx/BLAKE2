@@ -214,9 +214,9 @@ namespace BLAKE2 {
             return (flags_ & (1u << BIT_LAST_NODE)) != 0 ;
         }
     } ;
-    void        InitializeChain (uint64_t *chain) ;
-    void        InitializeChain (uint64_t *chain, const parameter_block_t &param) ;
-    void        Compress (uint64_t *chain, const void *message, uint64_t t0, uint64_t t1, uint64_t f0, uint64_t f1) ;
+    void    InitializeChain (uint64_t *chain) ;
+    void    InitializeChain (uint64_t *chain, const parameter_block_t &param) ;
+    void    Compress (uint64_t *chain, const void *message, uint64_t t0, uint64_t t1, uint64_t f0, uint64_t f1) ;
 
     /**
      * Convenience function for generating a digest.
@@ -228,7 +228,7 @@ namespace BLAKE2 {
      *
      * @return Computed digest
      */
-    Digest      Apply (const void *key, size_t key_length, const void *data, size_t data_length) ;
+    Digest  Apply (const void *key, size_t key_length, const void *data, size_t data_length) ;
     /**
      * Convenience function for generating a digest.
      *
@@ -240,7 +240,7 @@ namespace BLAKE2 {
      *
      * @return Computed digest.
      */
-    Digest      Apply (const parameter_block_t &param, const void *key, size_t key_length, const void *data, size_t data_length) ;
+    Digest  Apply (const parameter_block_t &param, const void *key, size_t key_length, const void *data, size_t data_length) ;
 }       /* end of [namespace BLAKE2] */
 
 inline bool     operator == (const BLAKE2::Digest &a, const BLAKE2::Digest &b) {
