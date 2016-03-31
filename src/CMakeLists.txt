@@ -5,8 +5,10 @@ include (TestBigEndian)
 include (CheckCXXSourceRuns)
 include (CheckCXXCompilerFlag)
 
-check_cxx_compiler_flag ("-mavx" TARGET_HAVE_AVX)
-check_cxx_compiler_flag ("-mavx2" TARGET_HAVE_AVX2)
+if (NOT ${MSVC})
+    check_cxx_compiler_flag ("-mavx" TARGET_HAVE_AVX)
+    check_cxx_compiler_flag ("-mavx2" TARGET_HAVE_AVX2)
+endif ()
 
 if (${TARGET_HAVE_AVX2})
     add_compile_options ("-mavx2")
