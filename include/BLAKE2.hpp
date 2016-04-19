@@ -162,7 +162,13 @@ namespace BLAKE2 {
         void    CopyTo (void *buffer, size_t buffer_length) const ;
 
         const uint8_t * GetBytes () const {
-            return &h_ [0] ;
+            return h_.data () ;
+        }
+        const uint8_t * data () const {
+            return h_.data () ;
+        }
+        constexpr size_t size () const {
+            return h_.size () ;
         }
         uint_fast8_t    At (size_t offset) const {
             return h_ [offset] ;
@@ -171,6 +177,10 @@ namespace BLAKE2 {
             return h_ [offset] ;
         }
         uint_fast64_t   GetUInt64 (size_t idx) const ;
+    public:
+        static constexpr size_t digestSize () {
+            return SIZE ;
+        }
     } ;
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
