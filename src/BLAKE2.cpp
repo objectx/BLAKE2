@@ -99,7 +99,7 @@ namespace BLAKE2 {
         param = p_ ;
     }
 
-    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
     /**
      * Increments 128bits counter by V.
      */
