@@ -1,7 +1,7 @@
 /*
  * manips.h:
  *
- * Copyright (c) 2015 Masashi Fujita
+ * Copyright (c) 2015-2016 Masashi Fujita
  */
 
 #ifndef	manips_h__7505e2954658cd40123cc4bf650bf20c

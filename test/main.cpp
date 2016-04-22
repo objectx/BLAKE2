@@ -1,7 +1,7 @@
 /*
  * main.cpp:
  *
- * Copyright (c) 2015 Masashi Fujita
+ * Copyright (c) 2015-2016 Masashi Fujita
  */
 #define CATCH_CONFIG_RUNNER 1
 #include <catch.hpp>
