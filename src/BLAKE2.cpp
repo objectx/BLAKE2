@@ -172,23 +172,23 @@ namespace BLAKE2 {
                   | ((v3 & 3) << 6) ) ;
     }
 
-    __m256i rotr32 (__m256i x) {
+    static inline __m256i   rotr32 (__m256i x) {
         return _mm256_shuffle_epi32 (x, maskgen (1, 0, 3, 2)) ;
     }
 
-    __m256i rotr24 (__m256i x) {
+    static inline __m256i   rotr24 (__m256i x) {
         return _mm256_or_si256 (_mm256_srli_epi64 (x, 24), _mm256_slli_epi64 (x, 64 - 24)) ;
     }
 
-    __m256i rotr16 (__m256i x) {
+    static inline __m256i   rotr16 (__m256i x) {
         return _mm256_or_si256 (_mm256_srli_epi64 (x, 16), _mm256_slli_epi64 (x, 64 - 16)) ;
     }
 
-    __m256i rotr63 (__m256i x) {
+    static inline __m256i   rotr63 (__m256i x) {
         return _mm256_or_si256 (_mm256_srli_epi64 (x, 63), _mm256_slli_epi64 (x, 64 - 63)) ;
     }
 
-    __m256i ror256x64 (__m256i x, int count) {
+    static inline __m256i   ror256x64 (__m256i x, int count) {
         switch (count & 3) {
         case 3: return _mm256_permute4x64_epi64 (x, maskgen (3, 0, 1, 2)) ;
         case 2: return _mm256_permute4x64_epi64 (x, maskgen (2, 3, 0, 1)) ;
@@ -201,7 +201,7 @@ namespace BLAKE2 {
         return x ;
     }
 
-    __m256i rol256x64 (__m256i x, int count) {
+    static inline __m256i   rol256x64 (__m256i x, int count) {
         switch (count & 3) {
         case 3: return _mm256_permute4x64_epi64 (x, maskgen (1, 2, 3, 0)) ;
         case 2: return _mm256_permute4x64_epi64 (x, maskgen (2, 3, 0, 1)) ;
@@ -214,8 +214,13 @@ namespace BLAKE2 {
         return x ;
     }
 
-    void Compress (uint64_t *chain, const void *message, uint64_t t0, uint64_t t1, uint64_t f0, uint64_t f1) {
-        const uint8_t * msg = static_cast<const uint8_t *> (message) ;
+    void    Compress ( uint64_t *chain
+                     , const void *message
+                     , uint64_t t0
+                     , uint64_t t1
+                     , uint64_t f0
+                     , uint64_t f1) {
+        auto    msg = static_cast<const uint8_t *> (message) ;
 
         uint64_t        m [16] ;
         m [ 0] = load64 (msg + 8 *  0) ;
@@ -235,9 +240,7 @@ namespace BLAKE2 {
         m [14] = load64 (msg + 8 * 14) ;
         m [15] = load64 (msg + 8 * 15) ;
 
-        //r256    o0 { &chain [0] } ;
         __m256i o0 = _mm256_loadu_si256 ((const __m256i *)(&chain [0])) ;
-        // r256    o1 { &chain [4] } ;
         __m256i o1 = _mm256_loadu_si256 ((const __m256i *)(&chain [4])) ;
 
         __m256i r0 = o0 ;
