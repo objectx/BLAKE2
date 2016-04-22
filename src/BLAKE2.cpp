@@ -119,26 +119,27 @@ namespace BLAKE2 {
          */
         uint64_t    generic_load64 (const void *start) {
             const uint8_t *p = static_cast<const uint8_t *> (start);
-            return ( (static_cast<uint64_t> (p[0]) <<  0)
-                   | (static_cast<uint64_t> (p[1]) <<  8)
-                   | (static_cast<uint64_t> (p[2]) << 16)
-                   | (static_cast<uint64_t> (p[3]) << 24)
-                   | (static_cast<uint64_t> (p[4]) << 32)
-                   | (static_cast<uint64_t> (p[5]) << 40)
-                   | (static_cast<uint64_t> (p[6]) << 48)
-                   | (static_cast<uint64_t> (p[7]) << 56));
+            return ( (static_cast<uint64_t> (p [0]) <<  0)
+                   | (static_cast<uint64_t> (p [1]) <<  8)
+                   | (static_cast<uint64_t> (p [2]) << 16)
+                   | (static_cast<uint64_t> (p [3]) << 24)
+                   | (static_cast<uint64_t> (p [4]) << 32)
+                   | (static_cast<uint64_t> (p [5]) << 40)
+                   | (static_cast<uint64_t> (p [6]) << 48)
+                   | (static_cast<uint64_t> (p [7]) << 56)
+                   );
         }
 
         void    generic_store64 (void *start, uint64_t value) {
             uint8_t *p = static_cast<uint8_t *> (start);
-            p[0] = static_cast<uint8_t> (value >>  0);
-            p[1] = static_cast<uint8_t> (value >>  8);
-            p[2] = static_cast<uint8_t> (value >> 16);
-            p[3] = static_cast<uint8_t> (value >> 24);
-            p[4] = static_cast<uint8_t> (value >> 32);
-            p[5] = static_cast<uint8_t> (value >> 40);
-            p[6] = static_cast<uint8_t> (value >> 48);
-            p[7] = static_cast<uint8_t> (value >> 56);
+            p [0] = static_cast<uint8_t> (value >> 0);
+            p [1] = static_cast<uint8_t> (value >> 8);
+            p [2] = static_cast<uint8_t> (value >> 16);
+            p [3] = static_cast<uint8_t> (value >> 24);
+            p [4] = static_cast<uint8_t> (value >> 32);
+            p [5] = static_cast<uint8_t> (value >> 40);
+            p [6] = static_cast<uint8_t> (value >> 48);
+            p [7] = static_cast<uint8_t> (value >> 56);
         }
 
 #if defined (TARGET_IS_LITTLE_ENDIAN) && defined (TARGET_ALLOWS_UNALIGNED_ACCESS)
@@ -164,9 +165,9 @@ namespace BLAKE2 {
             return (value >> cnt) | (value << (64 - cnt));
 #endif
         }
-
+    }
 #ifdef TARGET_HAVE_AVX2
-
+    namespace {
         constexpr int   maskgen (int v0, int v1, int v2, int v3) {
             return (  ((v0 & 3) << 0)
                     | ((v1 & 3) << 2)
