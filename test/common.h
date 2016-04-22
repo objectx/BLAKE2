@@ -1,7 +1,7 @@
 /*
  * common.h:
  *
- * Copyright (c) 2015 Masashi Fujita
+ * Copyright (c) 2015-2016 Masashi Fujita
  */
 #ifndef	common_h__09968374417d10df5bc39ea172cdd642
 #define	common_h__09968374417d10df5bc39ea172cdd642
