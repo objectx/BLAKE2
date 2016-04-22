@@ -5,8 +5,11 @@ include_directories ("${PROJECT_SOURCE_DIR}/Catch/include")
 
 set_source_files_properties (main.cpp PROPERTIES COTIRE_EXCLUDED TRUE)
 
+set (SOURCE_FILES test-blake2.cpp TestVector.cpp main.cpp)
+set (HEADER_FILES common.h manips.h)
 set (TARGET_NAME "test-blake2")
-add_executable (${TARGET_NAME} main.cpp test-blake2.cpp TestVector.cpp)
+
+add_executable (${TARGET_NAME} ${SOURCE_FILES} ${HEADER_FILES})
     target_link_libraries (${TARGET_NAME} BLAKE2)
 
 add_test (NAME ${TARGET_NAME}
