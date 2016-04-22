@@ -1,7 +1,7 @@
 /*
  * TestVector.h:
  *
- * Copyright (c) 2015 Masashi Fujita
+ * Copyright (c) 2015-2016 Masashi Fujita
  */
 #ifndef	testvector_h__618b59b34535a8a541907188170282ec
 #define	testvector_h__618b59b34535a8a541907188170282ec	1
