@@ -16,57 +16,57 @@
 #   include <immintrin.h>
 #endif
 
-static const size_t     SALT_LENGTH = 16 ;
-static const size_t     PERSONALIZATION_INFO_LENGTH = 16 ;
-static const size_t     MAX_KEY_LENGTH = 64 ;
+namespace {
+    const size_t    SALT_LENGTH = 16 ;
+    const size_t    PERSONALIZATION_INFO_LENGTH = 16 ;
+    const size_t    MAX_KEY_LENGTH = 64 ;
 
 #ifdef TARGET_HAVE_AVX2
-static constexpr __m128i    to__m128i (int v0, int v1, int v2, int v3) {
-    return (__m128i)(__v4si){ v0, v1, v2, v3 } ;
+    constexpr __m128i    to__m128i (int v0, int v1, int v2, int v3) {
+        return (__m128i)(__v4si){ v0, v1, v2, v3 } ;
+    }
+
+    const __m128i    sigma [12][4] = {
+        { to__m128i ( 0,  2,  4,  6), to__m128i ( 1,  3,  5,  7), to__m128i ( 8, 10, 12, 14), to__m128i ( 9, 11, 13, 15) },
+        { to__m128i (14,  4,  9, 13), to__m128i (10,  8, 15,  6), to__m128i ( 1,  0, 11,  5), to__m128i (12,  2,  7,  3) },
+        { to__m128i (11, 12,  5, 15), to__m128i ( 8,  0,  2, 13), to__m128i (10,  3,  7,  9), to__m128i (14,  6,  1,  4) },
+        { to__m128i ( 7,  3, 13, 11), to__m128i ( 9,  1, 12, 14), to__m128i ( 2,  5,  4, 15), to__m128i ( 6, 10,  0,  8) },
+        { to__m128i ( 9,  5,  2, 10), to__m128i ( 0,  7,  4, 15), to__m128i (14, 11,  6,  3), to__m128i ( 1, 12,  8, 13) },
+        { to__m128i ( 2,  6,  0,  8), to__m128i (12, 10, 11,  3), to__m128i ( 4,  7, 15,  1), to__m128i (13,  5, 14,  9) },
+        { to__m128i (12,  1, 14,  4), to__m128i ( 5, 15, 13, 10), to__m128i ( 0,  6,  9,  8), to__m128i ( 7,  3,  2, 11) },
+        { to__m128i (13,  7, 12,  3), to__m128i (11, 14,  1,  9), to__m128i ( 5, 15,  8,  2), to__m128i ( 0,  4,  6, 10) },
+        { to__m128i ( 6, 14, 11,  0), to__m128i (15,  9,  3,  8), to__m128i (12, 13,  1, 10), to__m128i ( 2,  7,  4,  5) },
+        { to__m128i (10,  8,  7,  1), to__m128i ( 2,  4,  6,  5), to__m128i (15,  9,  3, 13), to__m128i (11, 14, 12,  0) },
+        { to__m128i ( 0,  2,  4,  6), to__m128i ( 1,  3,  5,  7), to__m128i ( 8, 10, 12, 14), to__m128i ( 9, 11, 13, 15) },
+        { to__m128i (14,  4,  9, 13), to__m128i (10,  8, 15,  6), to__m128i ( 1,  0, 11,  5), to__m128i (12,  2,  7,  3) }
+    } ;
+#else
+    const uint8_t    sigma [12][16] = {
+        {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 } ,
+        { 14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3 } ,
+        { 11,  8, 12,  0,  5,  2, 15, 13, 10, 14,  3,  6,  7,  1,  9,  4 } ,
+        {  7,  9,  3,  1, 13, 12, 11, 14,  2,  6,  5, 10,  4,  0, 15,  8 } ,
+        {  9,  0,  5,  7,  2,  4, 10, 15, 14,  1, 11, 12,  6,  8,  3, 13 } ,
+        {  2, 12,  6, 10,  0, 11,  8,  3,  4, 13,  7,  5, 15, 14,  1,  9 } ,
+        { 12,  5,  1, 15, 14, 13,  4, 10,  0,  7,  6,  3,  9,  2,  8, 11 } ,
+        { 13, 11,  7, 14, 12,  1,  3,  9,  5,  0, 15,  4,  8,  6,  2, 10 } ,
+        {  6, 15, 14,  9, 11,  3,  0,  8, 12,  2, 13,  7,  1,  4, 10,  5 } ,
+        { 10,  2,  8,  4,  7,  6,  1,  5, 15, 11,  9, 14,  3, 12, 13 , 0 } ,
+
+        {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 } ,        // Same as sigma [0]
+        { 14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3 }
+    } ;
+#endif
+    const uint64_t  IV0 = 0x6a09e667f3bcc908ULL ;
+    const uint64_t  IV1 = 0xbb67ae8584caa73bULL ;
+    const uint64_t  IV2 = 0x3c6ef372fe94f82bULL ;
+    const uint64_t  IV3 = 0xa54ff53a5f1d36f1ULL ;
+    const uint64_t  IV4 = 0x510e527fade682d1ULL ;
+    const uint64_t  IV5 = 0x9b05688c2b3e6c1fULL ;
+    const uint64_t  IV6 = 0x1f83d9abfb41bd6bULL ;
+    const uint64_t  IV7 = 0x5be0cd19137e2179ULL ;
 }
 
-static const __m128i    sigma [12][4] = {
-    { to__m128i ( 0,  2,  4,  6), to__m128i ( 1,  3,  5,  7), to__m128i ( 8, 10, 12, 14), to__m128i ( 9, 11, 13, 15) },
-    { to__m128i (14,  4,  9, 13), to__m128i (10,  8, 15,  6), to__m128i ( 1,  0, 11,  5), to__m128i (12,  2,  7,  3) },
-    { to__m128i (11, 12,  5, 15), to__m128i ( 8,  0,  2, 13), to__m128i (10,  3,  7,  9), to__m128i (14,  6,  1,  4) },
-    { to__m128i ( 7,  3, 13, 11), to__m128i ( 9,  1, 12, 14), to__m128i ( 2,  5,  4, 15), to__m128i ( 6, 10,  0,  8) },
-    { to__m128i ( 9,  5,  2, 10), to__m128i ( 0,  7,  4, 15), to__m128i (14, 11,  6,  3), to__m128i ( 1, 12,  8, 13) },
-    { to__m128i ( 2,  6,  0,  8), to__m128i (12, 10, 11,  3), to__m128i ( 4,  7, 15,  1), to__m128i (13,  5, 14,  9) },
-    { to__m128i (12,  1, 14,  4), to__m128i ( 5, 15, 13, 10), to__m128i ( 0,  6,  9,  8), to__m128i ( 7,  3,  2, 11) },
-    { to__m128i (13,  7, 12,  3), to__m128i (11, 14,  1,  9), to__m128i ( 5, 15,  8,  2), to__m128i ( 0,  4,  6, 10) },
-    { to__m128i ( 6, 14, 11,  0), to__m128i (15,  9,  3,  8), to__m128i (12, 13,  1, 10), to__m128i ( 2,  7,  4,  5) },
-    { to__m128i (10,  8,  7,  1), to__m128i ( 2,  4,  6,  5), to__m128i (15,  9,  3, 13), to__m128i (11, 14, 12,  0) },
-    { to__m128i ( 0,  2,  4,  6), to__m128i ( 1,  3,  5,  7), to__m128i ( 8, 10, 12, 14), to__m128i ( 9, 11, 13, 15) },
-    { to__m128i (14,  4,  9, 13), to__m128i (10,  8, 15,  6), to__m128i ( 1,  0, 11,  5), to__m128i (12,  2,  7,  3) }
-} ;
-#else
-static const uint8_t    sigma [12][16] = {
-    {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 } ,
-    { 14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3 } ,
-    { 11,  8, 12,  0,  5,  2, 15, 13, 10, 14,  3,  6,  7,  1,  9,  4 } ,
-    {  7,  9,  3,  1, 13, 12, 11, 14,  2,  6,  5, 10,  4,  0, 15,  8 } ,
-    {  9,  0,  5,  7,  2,  4, 10, 15, 14,  1, 11, 12,  6,  8,  3, 13 } ,
-    {  2, 12,  6, 10,  0, 11,  8,  3,  4, 13,  7,  5, 15, 14,  1,  9 } ,
-    { 12,  5,  1, 15, 14, 13,  4, 10,  0,  7,  6,  3,  9,  2,  8, 11 } ,
-    { 13, 11,  7, 14, 12,  1,  3,  9,  5,  0, 15,  4,  8,  6,  2, 10 } ,
-    {  6, 15, 14,  9, 11,  3,  0,  8, 12,  2, 13,  7,  1,  4, 10,  5 } ,
-    { 10,  2,  8,  4,  7,  6,  1,  5, 15, 11,  9, 14,  3, 12, 13 , 0 } ,
-
-    {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 } ,        // Same as sigma [0]
-    { 14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3 }
-} ;
-#endif
-
-static const uint64_t   IV0 = 0x6a09e667f3bcc908ULL ;
-static const uint64_t   IV1 = 0xbb67ae8584caa73bULL ;
-static const uint64_t   IV2 = 0x3c6ef372fe94f82bULL ;
-static const uint64_t   IV3 = 0xa54ff53a5f1d36f1ULL ;
-static const uint64_t   IV4 = 0x510e527fade682d1ULL ;
-static const uint64_t   IV5 = 0x9b05688c2b3e6c1fULL ;
-static const uint64_t   IV6 = 0x1f83d9abfb41bd6bULL ;
-static const uint64_t   IV7 = 0x5be0cd19137e2179ULL ;
-
-#define ARRAY_SIZE(X_)  (sizeof (X_) / sizeof ((X_) [0]))
 
 namespace BLAKE2 {
 
@@ -99,47 +99,47 @@ namespace BLAKE2 {
         param = p_ ;
     }
 
-
-    /**
-     * Increments 128bits counter by V.
-     */
-    static inline void  inc_counter (uint64_t &t0, uint64_t &t1, size_t v) {
-        t0 += v ;
-        if (t0 < v) {
-            ++t1 ;
+    namespace {
+        /**
+         * Increments 128bits counter by V.
+         */
+        inline void inc_counter (uint64_t &t0, uint64_t &t1, size_t v) {
+            t0 += v;
+            if (t0 < v) {
+                ++t1;
+            }
         }
-    }
 
-    /**
-     * Loading littl-endian 64bits value.
-     *
-     * @param start The start address
-     *
-     * @return Loaded value
-     */
-    static uint64_t     generic_load64 (const void *start) {
-        const uint8_t * p = static_cast<const uint8_t *> (start) ;
-        return ((static_cast<uint64_t> (p [0]) <<  0) |
-                (static_cast<uint64_t> (p [1]) <<  8) |
-                (static_cast<uint64_t> (p [2]) << 16) |
-                (static_cast<uint64_t> (p [3]) << 24) |
-                (static_cast<uint64_t> (p [4]) << 32) |
-                (static_cast<uint64_t> (p [5]) << 40) |
-                (static_cast<uint64_t> (p [6]) << 48) |
-                (static_cast<uint64_t> (p [7]) << 56)) ;
-    }
+        /**
+         * Loading littl-endian 64bits value.
+         *
+         * @param start The start address
+         *
+         * @return Loaded value
+         */
+        uint64_t    generic_load64 (const void *start) {
+            const uint8_t *p = static_cast<const uint8_t *> (start);
+            return ( (static_cast<uint64_t> (p[0]) <<  0)
+                   | (static_cast<uint64_t> (p[1]) <<  8)
+                   | (static_cast<uint64_t> (p[2]) << 16)
+                   | (static_cast<uint64_t> (p[3]) << 24)
+                   | (static_cast<uint64_t> (p[4]) << 32)
+                   | (static_cast<uint64_t> (p[5]) << 40)
+                   | (static_cast<uint64_t> (p[6]) << 48)
+                   | (static_cast<uint64_t> (p[7]) << 56));
+        }
 
-    static void generic_store64 (void *start, uint64_t value) {
-        uint8_t *       p = static_cast<uint8_t *> (start) ;
-        p [0] = static_cast<uint8_t> (value >>  0) ;
-        p [1] = static_cast<uint8_t> (value >>  8) ;
-        p [2] = static_cast<uint8_t> (value >> 16) ;
-        p [3] = static_cast<uint8_t> (value >> 24) ;
-        p [4] = static_cast<uint8_t> (value >> 32) ;
-        p [5] = static_cast<uint8_t> (value >> 40) ;
-        p [6] = static_cast<uint8_t> (value >> 48) ;
-        p [7] = static_cast<uint8_t> (value >> 56) ;
-    }
+        void    generic_store64 (void *start, uint64_t value) {
+            uint8_t *p = static_cast<uint8_t *> (start);
+            p[0] = static_cast<uint8_t> (value >>  0);
+            p[1] = static_cast<uint8_t> (value >>  8);
+            p[2] = static_cast<uint8_t> (value >> 16);
+            p[3] = static_cast<uint8_t> (value >> 24);
+            p[4] = static_cast<uint8_t> (value >> 32);
+            p[5] = static_cast<uint8_t> (value >> 40);
+            p[6] = static_cast<uint8_t> (value >> 48);
+            p[7] = static_cast<uint8_t> (value >> 56);
+        }
 
 #if defined (TARGET_IS_LITTLE_ENDIAN) && defined (TARGET_ALLOWS_UNALIGNED_ACCESS)
 #   define load64(X_)           (*((const uint64_t *)(X_)))
@@ -148,78 +148,81 @@ namespace BLAKE2 {
 #   define load64(X_)           (generic_load64 (X_))
 #   define store64(X_, V_)      (generic_store64 ((X_), (V_)))
 #endif
-    /**
-     * Rotate right by CNT bits
-     *
-     * @param value Value to rotate
-     * @param cnt # of bits to rotate
-     *
-     * @return Rotated value
-     */
-    static inline uint_fast64_t rotr (uint64_t value, int cnt) {
+
+        /**
+         * Rotate right by CNT bits
+         *
+         * @param value Value to rotate
+         * @param cnt # of bits to rotate
+         *
+         * @return Rotated value
+         */
+        inline uint_fast64_t    rotr (uint64_t value, int cnt) {
 #if defined (_MSC_VER) && (1200 <= _MSC_VER)
-        return _rotr64 (value, cnt) ;
+            return _rotr64 (value, cnt) ;
 #else
-        return (value >> cnt) | (value << (64 - cnt)) ;
+            return (value >> cnt) | (value << (64 - cnt));
 #endif
-    }
+        }
 
 #ifdef TARGET_HAVE_AVX2
-    static constexpr int maskgen (int v0, int v1, int v2, int v3) {
-        return (  ((v0 & 3) << 0)
-                  | ((v1 & 3) << 2)
-                  | ((v2 & 3) << 4)
-                  | ((v3 & 3) << 6) ) ;
-    }
 
-    static inline __m256i   rotr32 (__m256i x) {
-        return _mm256_shuffle_epi32 (x, maskgen (1, 0, 3, 2)) ;
-    }
-
-    static inline __m256i   rotr24 (__m256i x) {
-        return _mm256_or_si256 (_mm256_srli_epi64 (x, 24), _mm256_slli_epi64 (x, 64 - 24)) ;
-    }
-
-    static inline __m256i   rotr16 (__m256i x) {
-        return _mm256_or_si256 (_mm256_srli_epi64 (x, 16), _mm256_slli_epi64 (x, 64 - 16)) ;
-    }
-
-    static inline __m256i   rotr63 (__m256i x) {
-        return _mm256_or_si256 (_mm256_srli_epi64 (x, 63), _mm256_slli_epi64 (x, 64 - 63)) ;
-    }
-
-    static inline __m256i   ror256x64 (__m256i x, int count) {
-        switch (count & 3) {
-        case 3: return _mm256_permute4x64_epi64 (x, maskgen (3, 0, 1, 2)) ;
-        case 2: return _mm256_permute4x64_epi64 (x, maskgen (2, 3, 0, 1)) ;
-        case 1: return _mm256_permute4x64_epi64 (x, maskgen (1, 2, 3, 0)) ;
-        case 0: return x ;
-        default:
-            break ;
+        constexpr int   maskgen (int v0, int v1, int v2, int v3) {
+            return (  ((v0 & 3) << 0)
+                    | ((v1 & 3) << 2)
+                    | ((v2 & 3) << 4)
+                    | ((v3 & 3) << 6));
         }
-        assert (false) ;
-        return x ;
-    }
 
-    static inline __m256i   rol256x64 (__m256i x, int count) {
-        switch (count & 3) {
-        case 3: return _mm256_permute4x64_epi64 (x, maskgen (1, 2, 3, 0)) ;
-        case 2: return _mm256_permute4x64_epi64 (x, maskgen (2, 3, 0, 1)) ;
-        case 1: return _mm256_permute4x64_epi64 (x, maskgen (3, 0, 1, 2)) ;
-        case 0: return x ;
-        default:
-            break ;
+        inline __m256i  rotr32 (__m256i x) {
+            return _mm256_shuffle_epi32 (x, maskgen (1, 0, 3, 2));
         }
-        assert (false) ;
-        return x ;
+
+        inline __m256i  rotr24 (__m256i x) {
+            return _mm256_or_si256 (_mm256_srli_epi64 (x, 24), _mm256_slli_epi64 (x, 64 - 24));
+        }
+
+        inline __m256i  rotr16 (__m256i x) {
+            return _mm256_or_si256 (_mm256_srli_epi64 (x, 16), _mm256_slli_epi64 (x, 64 - 16));
+        }
+
+        inline __m256i  rotr63 (__m256i x) {
+            return _mm256_or_si256 (_mm256_srli_epi64 (x, 63), _mm256_slli_epi64 (x, 64 - 63));
+        }
+
+        inline __m256i  ror256x64 (__m256i x, int count) {
+            switch (count & 3) {
+            case 3: return _mm256_permute4x64_epi64 (x, maskgen (3, 0, 1, 2));
+            case 2: return _mm256_permute4x64_epi64 (x, maskgen (2, 3, 0, 1));
+            case 1: return _mm256_permute4x64_epi64 (x, maskgen (1, 2, 3, 0));
+            case 0: return x;
+            default:
+                break;
+            }
+            assert (false);
+            return x;
+        }
+
+        inline __m256i  rol256x64 (__m256i x, int count) {
+            switch (count & 3) {
+            case 3: return _mm256_permute4x64_epi64 (x, maskgen (1, 2, 3, 0));
+            case 2: return _mm256_permute4x64_epi64 (x, maskgen (2, 3, 0, 1));
+            case 1: return _mm256_permute4x64_epi64 (x, maskgen (3, 0, 1, 2));
+            case 0: return x;
+            default:
+                break;
+            }
+            assert (false);
+            return x;
+        }
     }
 
-    void    Compress ( uint64_t *chain
-                     , const void *message
-                     , uint64_t t0
-                     , uint64_t t1
-                     , uint64_t f0
-                     , uint64_t f1) {
+    void    Compress ( uint64_t *   chain
+                     , const void * message
+                     , uint64_t     t0
+                     , uint64_t     t1
+                     , uint64_t     f0
+                     , uint64_t     f1) {
         auto    msg = static_cast<const uint8_t *> (message) ;
 
         uint64_t        m [16] ;
