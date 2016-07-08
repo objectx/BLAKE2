@@ -17,8 +17,6 @@
 #endif
 
 namespace {
-    const size_t    SALT_LENGTH = 16 ;
-    const size_t    PERSONALIZATION_INFO_LENGTH = 16 ;
     const size_t    MAX_KEY_LENGTH = 64 ;
 
 #ifdef TARGET_HAVE_AVX2
