@@ -208,6 +208,14 @@ namespace BLAKE2 {
         }
 
         uint_fast64_t   GetUInt64 (size_t idx) const ;
+
+        auto begin () const {
+            return h_.begin () ;
+        }
+
+        auto end () const {
+            return h_.end () ;
+        }
     public:
         static constexpr size_t digestSize () {
             return SIZE ;
