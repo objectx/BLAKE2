@@ -18,7 +18,7 @@ if (${USE_AVX2})
 endif ()
 
 if (NOT ${CMAKE_CROSSCOMPILING})
-	message ("# Checks unaligned word access")
+    message (STATUS "Checks unaligned word access")
     # Self hosted
     TEST_BIG_ENDIAN (IS_BIG_ENDIAN)
     if (NOT IS_BIG_ENDIAN)
