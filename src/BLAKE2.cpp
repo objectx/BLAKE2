@@ -17,8 +17,6 @@
 #endif
 
 namespace {
-    const size_t    SALT_LENGTH = 16 ;
-    const size_t    PERSONALIZATION_INFO_LENGTH = 16 ;
     const size_t    MAX_KEY_LENGTH = 64 ;
 
 #ifdef TARGET_HAVE_AVX2
@@ -81,7 +79,7 @@ namespace BLAKE2 {
 
     Parameter & Parameter::SetSalt (const void *salt, size_t length) {
         auto salt_len = std::min<const size_t> (length, MAX_SALT_LENGTH) ;
-        auto p = static_cast<uint8_t *> (&p_ [OFF_SALT]) ;
+        auto p = &p_ [OFF_SALT];
         memcpy (p, salt, salt_len) ;
         memset (p + salt_len, 0, MAX_SALT_LENGTH - salt_len) ;
         return *this ;

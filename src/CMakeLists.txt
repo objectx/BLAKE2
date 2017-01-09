@@ -5,15 +5,16 @@ include (TestBigEndian)
 include (CheckCXXSourceRuns)
 include (CheckCXXCompilerFlag)
 
-if (NOT ${MSVC})
-    check_cxx_compiler_flag ("-mavx" TARGET_HAVE_AVX)
-    check_cxx_compiler_flag ("-mavx2" TARGET_HAVE_AVX2)
-endif ()
-
-if (${TARGET_HAVE_AVX2})
-    add_compile_options ("-mavx2")
-elseif (${HAVE_AVX})
-    add_compile_options ("-mavx")
+if (${USE_AVX2})
+    if (NOT "${MSVC}")
+        check_cxx_compiler_flag ("-mavx" TARGET_HAVE_AVX)
+        check_cxx_compiler_flag ("-mavx2" TARGET_HAVE_AVX2)
+    endif ()
+    if (${TARGET_HAVE_AVX2})
+        add_compile_options ("-mavx2")
+    elseif (${TARGET_HAVE_AVX})
+        add_compile_options ("-mavx")
+    endif ()
 endif ()
 
 if (NOT ${CMAKE_CROSSCOMPILING})
@@ -48,7 +49,7 @@ set (TARGET_NAME BLAKE2)
 add_library (${TARGET_NAME} ${SOURCE_FILES} ${PUBLIC_HEADERS})
     target_include_directories (${TARGET_NAME} PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
-    target_compile_features (BLAKE2 PRIVATE cxx_nonstatic_member_init cxx_constexpr cxx_generic_lambdas)
+    target_compile_features (BLAKE2 PUBLIC cxx_nonstatic_member_init cxx_constexpr cxx_generic_lambdas cxx_return_type_deduction cxx_trailing_return_types)
 
 install (TARGETS ${TARGET_NAME}
         RUNTIME DESTINATION bin
