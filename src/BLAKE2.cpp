@@ -109,7 +109,7 @@ namespace BLAKE2 {
         }
 
         /**
-         * Loading littl-endian 64bits value.
+         * Loading little-endian 64bits value.
          *
          * @param start The start address
          *
@@ -216,7 +216,7 @@ namespace BLAKE2 {
         }
     }
 
-    void    Compress ( uint64_t *   chain
+    void    Compress ( hash_t &     chain
                      , const void * message
                      , uint64_t     t0
                      , uint64_t     t1
@@ -389,7 +389,7 @@ namespace BLAKE2 {
     }
 #endif  /* not TARGET_HAVE_AVX */
 
-    void        InitializeChain (uint64_t *chain) {
+    void        InitializeChain (hash_t &chain) {
         chain [0] = IV0 ;
         chain [1] = IV1 ;
         chain [2] = IV2 ;
@@ -401,7 +401,7 @@ namespace BLAKE2 {
     }
 
 
-    void        InitializeChain (uint64_t *chain, const parameter_block_t &param) {
+    void        InitializeChain (hash_t &chain, const parameter_block_t &param) {
         chain [0] = IV0 ^ load64 (&param [ 0]) ;
         chain [1] = IV1 ^ load64 (&param [ 8]) ;
         chain [2] = IV2 ^ load64 (&param [16]) ;
@@ -410,10 +410,6 @@ namespace BLAKE2 {
         chain [5] = IV5 ^ load64 (&param [40]) ;
         chain [6] = IV6 ^ load64 (&param [48]) ;
         chain [7] = IV7 ^ load64 (&param [56]) ;
-    }
-
-    Generator::~Generator () {
-        /* NO-OP */
     }
 
     Generator::Generator (const parameter_block_t &param)
@@ -490,16 +486,19 @@ namespace BLAKE2 {
         memset (&buf [used_], 0, BUFFER_SIZE - used_) ;      // 0 padding.
         Compress (h_, &buf [0], t0_, t1_, ~0uLL, 0) ;
         flags_ |= (1u << BIT_FINALIZED) ;
-        return Digest (h_ [0], h_ [1], h_ [2], h_ [3], h_ [4], h_ [5], h_ [6], h_ [7]) ;
+        return Digest { h_ } ;
     }
 
-    Digest      Apply (const void *key, size_t key_length, const void *data, size_t data_length) {
+    Digest      Apply ( const void *key , size_t key_length
+                      , const void *data, size_t data_length) {
         Parameter       param ;
         return Apply (param.GetParameterBlock (), key, key_length, data, data_length) ;
     }
 
-    Digest      Apply (const parameter_block_t &param, const void *key, size_t key_length, const void *data, size_t data_length) {
-        uint64_t        H [8] ;
+    Digest      Apply ( const parameter_block_t &param
+                      , const void *key , size_t key_length
+                      , const void *data, size_t data_length) {
+        hash_t          H ;
         uint_fast64_t   t0 = 0 ;
         uint_fast64_t   t1 = 0 ;
         uint8_t         buffer [BLOCK_SIZE] ;
@@ -550,8 +549,8 @@ namespace BLAKE2 {
         return Digest (H [0], H [1], H [2], H [3], H [4], H [5], H [6], H [7]) ;
     }
 
-    Digest::Digest (uint64_t h0, uint64_t h1, uint64_t h2, uint64_t h3,
-                    uint64_t h4, uint64_t h5, uint64_t h6, uint64_t h7) {
+    Digest::Digest ( uint64_t h0, uint64_t h1, uint64_t h2, uint64_t h3
+                   , uint64_t h4, uint64_t h5, uint64_t h6, uint64_t h7) {
         store64 (&h_ [8 * 0], h0) ;
         store64 (&h_ [8 * 1], h1) ;
         store64 (&h_ [8 * 2], h2) ;

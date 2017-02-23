@@ -80,7 +80,7 @@ TEST_CASE ("Test Parameter", "[Parameter]") {
 
 TEST_CASE ("Test Compression", "[Compress]") {
     SECTION ("Pass all 0 block") {
-        uint64_t    h [8] ;
+        BLAKE2::hash_t  h ;
         uint8_t     buf [128] ;
 
         BLAKE2::InitializeChain (h) ;
@@ -99,7 +99,7 @@ TEST_CASE ("Test Compression", "[Compress]") {
     }
 
     SECTION ("Pass repeated sequence") {
-        uint64_t    h [8] ;
+        BLAKE2::hash_t  h ;
         uint8_t     buf [128] ;
 
         memset (buf, 0, sizeof (buf)) ;

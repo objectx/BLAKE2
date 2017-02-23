@@ -38,9 +38,9 @@ namespace BLAKE2 {
 
     class Parameter {
     public:
-        typedef Parameter       self_t ;
+        using self_t = Parameter ;
     private:
-        parameter_block_t       p_ ;
+        parameter_block_t   p_ ;
     public:
         Parameter () ;
 
@@ -156,12 +156,15 @@ namespace BLAKE2 {
         }
     } ;
 
+    /** Internal digest value (architecture agonistic).  */
+    using hash_t = std::array<uint64_t, 8> ;
+
     /**
-     * 512bits digest value.
+     * 512bits digest value (architecture agonostic).
      */
     class Digest {
     public:
-        static constexpr size_t SIZE = 64 ;     // # of bytes in digest.
+        static constexpr size_t SIZE = sizeof (hash_t) ;     // # of bytes in digest.
     private:
         std::array<uint8_t, SIZE>   h_ ;
     public:
@@ -169,8 +172,13 @@ namespace BLAKE2 {
             h_.fill (0) ;
         }
 
-        Digest (uint64_t h0, uint64_t h1, uint64_t h2, uint64_t h3,
-                uint64_t h4, uint64_t h5, uint64_t h6, uint64_t h7) ;
+        Digest ( uint64_t h0, uint64_t h1, uint64_t h2, uint64_t h3
+               , uint64_t h4, uint64_t h5, uint64_t h6, uint64_t h7) ;
+
+        Digest (const hash_t &h) : Digest { h [0], h [1], h [2], h [3]
+                                          , h [4], h [5], h [6], h [7] } {
+            /* NO-OP */
+        }
 
         Digest (const Digest &src) {
             h_ = src.h_ ;
@@ -226,7 +234,6 @@ namespace BLAKE2 {
         }
     } ;
 
-
     class Generator {
     private:
         enum {
@@ -235,12 +242,12 @@ namespace BLAKE2 {
         } ;
         static const size_t     BUFFER_SIZE = 2 * BLOCK_SIZE ;
     private:
-        uint64_t        h_ [8] ;
-        uint64_t        t0_ ;
-        uint64_t        t1_ ;
-        int32_t         used_ ;
-        uint32_t        flags_ ;
-        std::unique_ptr<std::array<uint8_t, BUFFER_SIZE> >  buffer_ ;
+        hash_t      h_ ;
+        uint64_t    t0_ ;
+        uint64_t    t1_ ;
+        int32_t     used_ ;
+        uint32_t    flags_ ;
+        std::unique_ptr<std::array<uint8_t, BUFFER_SIZE>>   buffer_ ;
         /*
          * buffer_ --> +----------------+
          *             |                |
@@ -254,13 +261,19 @@ namespace BLAKE2 {
          * Note: Due to last block compression scheme, we must hold the last message.
          */
     public:
-        ~Generator () ;
+        ~Generator () = default ;
 
         Generator (const parameter_block_t &param) ;
 
         Generator (const parameter_block_t &param, const void *key, size_t key_len) ;
 
-        Generator &     Update (const void *data, size_t size) ;
+        Generator () = delete ;
+
+        Generator (const Generator &) = delete ;
+
+        Generator & operator = (const Generator &) = delete ;
+
+        Generator & Update (const void *data, size_t size) ;
 
         Digest  Finalize () ;
     private:
@@ -273,10 +286,10 @@ namespace BLAKE2 {
         }
     } ;
 
-    void    InitializeChain (uint64_t *chain) ;
-    void    InitializeChain (uint64_t *chain, const parameter_block_t &param) ;
+    void    InitializeChain (hash_t &chain) ;
+    void    InitializeChain (hash_t &chain, const parameter_block_t &param) ;
 
-    void    Compress ( uint64_t *   chain
+    void    Compress ( hash_t &     chain
                      , const void * message
                      , uint64_t     t0
                      , uint64_t     t1
