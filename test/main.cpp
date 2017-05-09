@@ -1,13 +1,7 @@
 /*
  * main.cpp:
  *
- * Copyright (c) 2015-2016 Masashi Fujita
+ * Copyright (c) 2015-2017 Masashi Fujita
  */
-#define CATCH_CONFIG_RUNNER 1
+#define CATCH_CONFIG_MAIN
 #include <catch.hpp>
-
-int main (int argc, char **argv) {
-    int result = Catch::Session().run (argc, argv) ;
-
-    return result ;
-}
