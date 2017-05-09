@@ -302,7 +302,13 @@ namespace BLAKE2 {
         _mm256_storeu_si256 ((__m256i *)(&chain [4]), _mm256_xor_si256 (o1, _mm256_xor_si256 (r1, r3))) ;
     }
 #else
-    void        Compress (uint64_t *chain, const void *message, uint64_t t0, uint64_t t1, uint64_t f0, uint64_t f1) {
+
+    void Compress ( hash_t &    chain
+                  , const void *message
+                  , uint64_t    t0
+                  , uint64_t    t1
+                  , uint64_t    f0
+                  , uint64_t    f1) {
         const uint8_t * msg = static_cast<const uint8_t *> (message) ;
 
         uint64_t        m [16] ;
@@ -413,19 +419,19 @@ namespace BLAKE2 {
     }
 
     Generator::Generator (const parameter_block_t &param)
-        : t0_ (0)
-        , t1_ (0)
-        , used_ (0)
-        , flags_ (0) {
+            : t0_ (0)
+            , t1_ (0)
+            , used_ (0)
+            , flags_ (0) {
         buffer_ = std::make_unique<std::remove_reference<decltype (*buffer_)>::type> () ;
         InitializeChain (h_, param) ;
     }
 
     Generator::Generator (const parameter_block_t &param, const void *key, size_t key_len)
-        : t0_ (0)
-        , t1_ (0)
-        , used_ (0)
-        , flags_ (0) {
+            : t0_ (0)
+            , t1_ (0)
+            , used_ (0)
+            , flags_ (0) {
         buffer_ = std::make_unique<std::remove_reference<decltype (*buffer_)>::type> () ;
 
         if (key == 0 || key_len == 0) {
