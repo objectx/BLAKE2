@@ -1,9 +1,9 @@
 
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required (VERSION 3.7)
 
 project (BLAKE2
     LANGUAGES CXX C
-    VERSION 1.0.3.0)
+    VERSION 1.0.6.0)
 
 function (setvar_default var_)
     if (NOT DEFINED ${var_})
