@@ -23,5 +23,6 @@ include (cotire)
 # set (COTIRE_VERBOSE TRUE)
 enable_testing ()
 
+add_subdirectory (ext/rapidcheck)
 add_subdirectory (src)
 add_subdirectory (test)

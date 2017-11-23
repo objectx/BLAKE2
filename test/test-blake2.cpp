@@ -10,7 +10,7 @@
 
 static std::ostream &   operator << (std::ostream &out, const BLAKE2::parameter_block_t &p) {
 #define P_(OFF_)        put_hex (p [OFF_], 2)
-    for (int_fast32_t i = 0 ; i < sizeof (p) ; i += 16) {
+    for (int_fast32_t i = 0 ; i < p.size () ; i += 16) {
         if (0 < i) {
             out << ' ' ;
         }
@@ -29,6 +29,10 @@ static std::string      dump_parameter (const BLAKE2::parameter_block_t &p) {
     return out.str () ;
 }
 
+static std::string  dump_parameter (const BLAKE2::Parameter &p) {
+    return dump_parameter (static_cast<const BLAKE2::parameter_block_t &>(p)) ;
+}
+
 TEST_CASE ("Test Parameter", "[Parameter]") {
     SECTION ("Empty parameter") {
         BLAKE2::Parameter       P ;
@@ -38,7 +42,7 @@ TEST_CASE ("Test Parameter", "[Parameter]") {
                                          "00000000 00000000 00000000 00000000 "
                                          "00000000 00000000 00000000 00000000\n" } ;
         // std::cerr << result ;
-        REQUIRE (result.compare (expected) == 0) ;
+        REQUIRE (result == expected) ;
     }
     SECTION ("Initialize parameter") {
         uint8_t salt [16] ;
@@ -56,7 +60,7 @@ TEST_CASE ("Test Parameter", "[Parameter]") {
                                          "00000000 00000000 00000000 00000000 "
                                          "55555555 55555555 55555555 55555555 "
                                          "eeeeeeee eeeeeeee eeeeeeee eeeeeeee\n" } ;
-        REQUIRE (result.compare (expected) == 0) ;
+        REQUIRE (result == expected) ;
     }
     SECTION ("Initialize parameter with shorter salt/personalization") {
         uint8_t salt [8] ;
@@ -74,17 +78,17 @@ TEST_CASE ("Test Parameter", "[Parameter]") {
                                          "00000000 00000000 00000000 00000000 "
                                          "55555555 55555555 00000000 00000000 "
                                          "eeeeeeee eeeeeeee 00000000 00000000\n" } ;
-        REQUIRE (result.compare (expected) == 0) ;
+        REQUIRE (result == expected) ;
     }
 }
 
 TEST_CASE ("Test Compression", "[Compress]") {
     SECTION ("Pass all 0 block") {
-        BLAKE2::hash_t  h ;
         uint8_t     buf [128] ;
-
-        BLAKE2::InitializeChain (h) ;
         memset (buf, 0, sizeof (buf)) ;
+
+        BLAKE2::hash_t  h ;
+        BLAKE2::InitializeChain (h) ;
 
         BLAKE2::Compress (h, buf, 0, 0, 0, 0) ;
 
@@ -99,13 +103,13 @@ TEST_CASE ("Test Compression", "[Compress]") {
     }
 
     SECTION ("Pass repeated sequence") {
-        BLAKE2::hash_t  h ;
         uint8_t     buf [128] ;
 
         memset (buf, 0, sizeof (buf)) ;
         for (int_fast32_t i = 0 ; i < sizeof (buf) ; ++i) {
-            buf [i] = i & 0xFFu ;
+            buf [i] = static_cast<uint8_t>(i & 0xFFu);
         }
+        BLAKE2::hash_t  h ;
 
         BLAKE2::InitializeChain (h) ;
         BLAKE2::Compress (h, buf, 0, 0, 0, 0) ;
@@ -166,11 +170,27 @@ TEST_CASE ("Test BLAKE2", "[blake2]") {
     SECTION ("Use empty key") {
         for (size_t i = 0 ; i < TestVector::NUM_BLAKE2_TEST ; ++i) {
             BLAKE2::Digest  expected { BLAKE2::Generator (param).Update (buf, i).Finalize () } ;
-            BLAKE2::Digest  actual { BLAKE2::Apply (0, 0, buf, i) } ;
+            BLAKE2::Digest  actual { BLAKE2::Apply (nullptr, 0, buf, i) } ;
 
             REQUIRE (BLAKE2::Digest::IsEqual (actual, expected)) ;
         }
     }
+}
+
+TEST_CASE ("Test BLAKE2 property", "[PBT]") {
+    rc::prop ("Incremental update should match to batch update", [] {
+        auto const key = *rc::gen::arbitrary<std::vector<uint8_t>> () ;
+        auto const src = *rc::gen::resize (4096, rc::gen::arbitrary<std::vector<uint8_t>> ()) ;
+        auto const split = *rc::gen::inRange<size_t> (0, src.size ()) ;
+        RC_CLASSIFY (key.size () == 0, "Empty key") ;
+        BLAKE2::Digest  expected { BLAKE2::Apply (key.data (), key.size (), src.data (), src.size ()) };
+        BLAKE2::Parameter   param ;
+        BLAKE2::Generator g {param, key.data (), key.size () } ;
+        const uint8_t *    p = src.data () ;
+        g.Update (p, split).Update (p + split, src.size () - split) ;
+        BLAKE2::Digest actual { g.Finalize () } ;
+        RC_ASSERT (BLAKE2::Digest::IsEqual (actual, expected)) ;
+    }) ;
 }
 
 /*
