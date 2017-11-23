@@ -48,7 +48,7 @@ namespace BLAKE2 {
             /* NO-OP */
         }
 
-        Parameter (const parameter_block_t &param) ;
+        explicit Parameter (const parameter_block_t &param) ;
 
         uint_fast8_t    GetDigestLength () const {
             return p_ [OFF_DIGEST_LENGTH] ;
@@ -175,14 +175,12 @@ namespace BLAKE2 {
         Digest ( uint64_t h0, uint64_t h1, uint64_t h2, uint64_t h3
                , uint64_t h4, uint64_t h5, uint64_t h6, uint64_t h7) ;
 
-        Digest (const hash_t &h) : Digest { h [0], h [1], h [2], h [3]
-                                          , h [4], h [5], h [6], h [7] } {
+        explicit Digest (const hash_t &h) : Digest { h [0], h [1], h [2], h [3]
+                                                   , h [4], h [5], h [6], h [7] } {
             /* NO-OP */
         }
 
-        Digest (const Digest &src) {
-            h_ = src.h_ ;
-        }
+        Digest (const Digest &src) = default ;
 
         Digest &        Assign (const Digest &src) {
             h_ = src.h_ ;
@@ -263,7 +261,7 @@ namespace BLAKE2 {
     public:
         ~Generator () = default ;
 
-        Generator (const parameter_block_t &param) ;
+        explicit Generator (const parameter_block_t &param) ;
 
         Generator (const parameter_block_t &param, const void *key, size_t key_len) ;
 
