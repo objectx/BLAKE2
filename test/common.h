@@ -18,7 +18,8 @@
 #include <string>
 #include <sstream>
 #include <catch.hpp>
-
+#include <rapidcheck.h>
+#include <rapidcheck/catch.h>
 #endif	/* common_h__09968374417d10df5bc39ea172cdd642 */
 /*
  * [END OF FILE]

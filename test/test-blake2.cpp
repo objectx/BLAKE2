@@ -177,6 +177,22 @@ TEST_CASE ("Test BLAKE2", "[blake2]") {
     }
 }
 
+TEST_CASE ("Test BLAKE2 property", "[PBT]") {
+    rc::prop ("Incremental update should match to batch update", [] {
+        auto const key = *rc::gen::arbitrary<std::vector<uint8_t>> () ;
+        auto const src = *rc::gen::resize (4096, rc::gen::arbitrary<std::vector<uint8_t>> ()) ;
+        auto const split = *rc::gen::inRange<size_t> (0, src.size ()) ;
+        RC_CLASSIFY (key.size () == 0, "Empty key") ;
+        BLAKE2::Digest  expected { BLAKE2::Apply (key.data (), key.size (), src.data (), src.size ()) };
+        BLAKE2::Parameter   param ;
+        BLAKE2::Generator g {param, key.data (), key.size () } ;
+        const uint8_t *    p = src.data () ;
+        g.Update (p, split).Update (p + split, src.size () - split) ;
+        BLAKE2::Digest actual { g.Finalize () } ;
+        RC_ASSERT (BLAKE2::Digest::IsEqual (actual, expected)) ;
+    }) ;
+}
+
 /*
  * [END OF FILE]
  */

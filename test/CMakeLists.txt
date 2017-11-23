@@ -9,7 +9,7 @@ set (HEADER_FILES common.h manips.h)
 set (TARGET_NAME "test-blake2")
 
 add_executable (${TARGET_NAME} ${SOURCE_FILES} ${HEADER_FILES})
-target_link_libraries (${TARGET_NAME} PRIVATE BLAKE2)
+target_link_libraries (${TARGET_NAME} PRIVATE BLAKE2 rapidcheck rapidcheck_catch)
 target_compile_features (${TARGET_NAME} PRIVATE cxx_std_14)
 set_target_properties (${TARGET_NAME} PROPERTIES
         COTIRE_CXX_PREFIX_HEADER_INIT "common.h")
