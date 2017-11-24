@@ -23,6 +23,7 @@ include (cotire)
 # set (COTIRE_VERBOSE TRUE)
 enable_testing ()
 
+set (RC_ENABLE_CATCH ON CACHE BOOL "Enable Catch support")
 add_subdirectory (ext/rapidcheck)
 add_subdirectory (src)
 add_subdirectory (test)
