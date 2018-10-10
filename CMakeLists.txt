@@ -1,5 +1,5 @@
 
-cmake_minimum_required (VERSION 3.7)
+cmake_minimum_required (VERSION 3.10)
 
 project (BLAKE2
     LANGUAGES CXX C
@@ -18,7 +18,7 @@ setvar_default (CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 option (USE_AVX2 "Compile with AVX2 instruction")
 
-include (cotire)
+include (cotire OPTIONAL)
 
 # set (COTIRE_VERBOSE TRUE)
 enable_testing ()
